@@ -30,8 +30,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['0.0.0.0', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
@@ -92,7 +91,7 @@ DATABASES = {
         # 'USER': os.getenv("DATABASE_USER"),
         'PASSWORD': 'admin',
         # 'PASSWORD': os.getenv("DATABASE_PASSWORD"),
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432'
     }
 }
