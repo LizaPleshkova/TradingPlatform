@@ -87,9 +87,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'trading_db',
         # 'NAME': os.getenv("DATABASE_NAME"),
-        'USER': 'admin',
+        'USER': 'postgres',
         # 'USER': os.getenv("DATABASE_USER"),
-        'PASSWORD': 'admin',
+        'PASSWORD': 'postgres',
         # 'PASSWORD': os.getenv("DATABASE_PASSWORD"),
         'HOST': 'db',
         'PORT': '5432'
