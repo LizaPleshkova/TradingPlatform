@@ -40,6 +40,8 @@ class WatchList(models.Model):
     user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
     item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.SET_NULL)
 
+    class Meta:
+        unique_together = ('user', 'item')
 
 class Offer(models.Model):
     ''' заявка на продажу\покупку конкретной акции(item) '''

@@ -2,7 +2,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
-from trading.serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, InventorySerializer
+from trading.serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, InventorySerializer, \
+    CurrencySerializer, PriceSerializer
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 from rest_framework import generics
 
@@ -23,12 +24,6 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
 
     def get_queryset(self, *args, **kwargs):
         queryset = Offer.objects.filter(user=self.request.user)
@@ -53,14 +48,6 @@ class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
-    # def perform_create(self, serializer):
-    #     return serializer.save()
-    #
-    # def get(self, request, *args, **kwargs):
-    #     return self.list(request, *args, **kwargs)
-    #
-    # def post(self, request, *args, **kwargs):
-    #     return self.create(request, *args, **kwargs)
 
 
 class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet,
@@ -71,5 +58,21 @@ class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
     def get_queryset(self, *args, **kwargs):
         queryset = Inventory.objects.filter(user=self.request.user)
         return queryset
+
     def perform_create(self, serializer):
         return serializer.save(user=self.request.user)
+
+
+class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet,
+                   generics.GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = CurrencySerializer
+    queryset = Currency.objects.all()
+
+
+class PriceView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet,
+                generics.GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PriceSerializer
+    queryset = Price.objects.all()
+
