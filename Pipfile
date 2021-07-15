@@ -8,6 +8,7 @@ requests = "*"
 django = "*"
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
+psycopg2 = "*"
 
 [dev-packages]
 
