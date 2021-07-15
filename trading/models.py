@@ -43,6 +43,13 @@ class WatchList(models.Model):
 
 class Offer(models.Model):
     ''' заявка на продажу\покупку конкретной акции(item) '''
+    BUY = 'BUY'
+    SELL = 'SELL'
+    OFFER_CHOICES = [
+        (BUY, 'Buy stocks'),
+        (SELL, 'Sell stocks')
+    ]
+    type_transaction = models.CharField(max_length=5, choices=OFFER_CHOICES, null=True)
     item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
     price = models.DecimalField("Requested price", max_digits=7,decimal_places=2,)
