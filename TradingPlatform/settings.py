@@ -74,7 +74,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'trading_db',
         # 'NAME': os.getenv("DATABASE_NAME"),
-        'USER': 'postgres',
+        'USER': 'admin',
         # 'USER': os.getenv("DATABASE_USER"),
         'PASSWORD': 'admin',
         # 'PASSWORD': os.getenv("DATABASE_PASSWORD"),
@@ -98,8 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
+# AUTH_USER_MODEL = 'trading.UserProfile'
 
 LANGUAGE_CODE = 'en-us'
 

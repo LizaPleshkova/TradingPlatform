@@ -39,3 +39,9 @@ class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = '__all__'
+
+
+class TradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trade
+        fields = '__all__'
