@@ -1,7 +1,7 @@
 from django.urls import path
 
 from rest_framework import routers
-from trading.views import OfferListUserView, ItemView, WatchListView, InventoryView, \
+from .views import OfferListUserView, ItemView, WatchListView, InventoryView, \
     PriceView, CurrencyView, TradeView
 
 router = routers.SimpleRouter()

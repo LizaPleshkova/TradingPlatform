@@ -1,8 +1,11 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from requests import Response
+from rest_framework import status
 
-from trading.serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, InventorySerializer, \
+from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, InventorySerializer, \
     CurrencySerializer, PriceSerializer, TradeSerializer
-from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
+from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
 
 
 class TradeService():
@@ -25,8 +28,15 @@ class TradeService():
         else:
             inventory_buyer.quantity += user_offer.quantity
             inventory_buyer.save()
+        return inventory_buyer
 
-    def updating_inventory_seller(self, user, user_offer):
+    def updating_inventory_seller(self, user, user_offer, buyer_offer):
+        # try:
         inventory_seller = get_object_or_404(Inventory, user=user, item=user_offer.item)
-        inventory_seller.quantity -= user_offer.quantity
+        # inventory_seller = Inventory.objects.get(user=user, item=user_offer.item)
+        inventory_seller.quantity -= buyer_offer.quantity
         inventory_seller.save()
+        # except Inventory.DoesNotExist:
+        #     raise DoesNotExist
+        #     # ({"No Inventory seller matches the given query."}, status=status.HTTP_400_BAD_REQUEST)
+        return inventory_seller
