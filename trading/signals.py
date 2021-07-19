@@ -5,9 +5,9 @@ from trading.models import UserProfile
 
 User = get_user_model()
 
-#for creating UserProfile after creating User
+
+# for creating UserProfile after creating User
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         instance.profile = UserProfile.objects.create(user=instance)
-    instance.profile.save()
