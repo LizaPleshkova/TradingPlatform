@@ -5,7 +5,10 @@ services:
     image: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
-#    environment:
+    environment:
+      - POSTGRES_DB=trading_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
 #      - POSTGRES_DB="${DATABASE_NAME}"
 #      - POSTGRES_USER="${DATABASE_USER}"
 #      - POSTGRES_PASSWORD="${DATABASE_PASSWORD}"
