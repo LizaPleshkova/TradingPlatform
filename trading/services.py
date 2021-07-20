@@ -1,6 +1,6 @@
 from decimal import Decimal
-
 from django.contrib.auth.models import User
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
@@ -22,18 +22,21 @@ class OfferService(BaseService):
         request.data['user'] = request.user.id
         return super(OfferService, self).get_validate_data(request)
 
-
 class TradeService:
 
     @staticmethod
-    def updating_user_score(user_id: int, user_offer: Offer, buyer_offer=None):
-        user_profile = get_object_or_404(UserProfile, user_id=user_id)
-        if user_offer.type_transaction == OfferCnoice.BUY:
-            user_profile.score = user_profile.score - user_offer.price * user_offer.quantity
-        elif user_offer.type_transaction == OfferCnoice.SELL:
-            user_profile.score = user_profile.score + buyer_offer.price * buyer_offer.quantity
-        user_profile.save(update_fields=["score"])
-        return user_profile
+    def updating_user_score(user_id, user_offer: Offer, buyer_offer=None):
+        try:
+            # user_profile = get_object_or_404(UserProfile, user_id=user_id)
+            user_profile = UserProfile.objects.get(user_id=user_id)
+            if user_offer.type_transaction == OfferCnoice.BUY.name:
+                user_profile.score = user_profile.score - user_offer.price * user_offer.quantity
+            elif user_offer.type_transaction == OfferCnoice.SELL.name:
+                user_profile.score = user_profile.score + buyer_offer.price * buyer_offer.quantity
+            user_profile.save(update_fields=["score"])
+        except UserProfile.DoesNotExist:
+            return "No UserProfile  matches the given query."
+            # raise ObjectDoesNotExist("No UserProfile  matches the given query.")
 
     @staticmethod
     def updating_inventory_buyer(user: User, user_offer: Offer):
