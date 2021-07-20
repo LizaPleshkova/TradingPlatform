@@ -14,6 +14,19 @@ from .services import TradeService, OfferService, BaseService
 
 User = get_user_model()
 
+#
+# class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
+#     permission_classes = (IsAuthenticated,)
+#     # queryset = Item.objects.all()
+#
+#     # def list(self, request, *args, **kwargs):
+#         # requirements_transactions.delay()
+#
+#     # def get_serializer_class(self):
+#     #     if self.action == 'retrieve' or self.action == 'create':
+#     #         return ItemDetailSerializer
+#     #     return ItemSerializer
+
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet, OfferService):
     permission_classes = (IsAuthenticated,)

@@ -3,8 +3,6 @@ from enum import Enum
 from django.db import models
 from django.contrib.auth.models import User
 
-from TradingPlatform import settings
-
 
 class UserProfile(models.Model):
     ''' userprofile with user's score'''

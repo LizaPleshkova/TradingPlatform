@@ -22,7 +22,49 @@ class OfferService(BaseService):
         request.data['user'] = request.user.id
         return super(OfferService, self).get_validate_data(request)
 
+
 class TradeService:
+    # Прицип работы: Пользователь может создавать Offer на покупку или продажу указывая количество и стоимость.
+    # Celery запускает скрипт каждую минуту который ищет подходящие Offers на покупку и продажу.
+    # Требования для сделки:
+    #           цена покупки <= числа продажи,
+    #           количество покупки <= количеству продажи
+    # (мы можем купить наши Items у нескольких продавцов), скрипт должен находить выгодные предложения.
+
+    @staticmethod
+    def requiremenets_for_transaction(buyer_user: User):
+        '''
+        должно ли что-то получать на вход?нет
+        здесь будет сама логика для поиска заявок:
+            1цена покупки <= цена продажи,
+            2количество покупки <= количеству продажи
+
+        return объекты ( Offers), кототрые удовлетворяют условиям
+        '''
+
+        # получаем все офферы пользователя для покупки
+        user_offers_buyer = Offer.objects.filter(user=buyer_user, type_transaction=OfferCnoice.BUY)
+
+        # получаем все офферы для продажи
+        offers_seller = Offer.objects.filter(type_transaction=OfferCnoice.SELL)
+
+        # цикл для проверки самх условий
+
+        for user_offer in user_offers_buyer:
+            for offer_seller in offers_seller:
+                # \sale_price = Item.objects.get(item_price=user_offer.item)
+                # sale_price_obj = Price.objects.get(item_price=user_offer.item_offer.item_price)
+                # sale_price = sale_price_obj.price # get price for sale
+
+                # условие (0) : user_offer.item == offer_seller.item # зафвки на одну и ту же items
+
+                # условие (1) : user_offer.price <= sale_price_obj.price
+
+                # условие (2) : user_offer.quantity <= offer_seller.quantity
+                # ?можем купить наши Items у нескольких продавцов?
+
+                # если ок - добавлять в ?список(во что сохранять)
+                pass
 
     @staticmethod
     def updating_user_score(user_id, user_offer: Offer, buyer_offer=None):
