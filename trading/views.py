@@ -1,7 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
@@ -33,7 +31,6 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
     def create(self, request, *args, **kwargs):
         try:
             serializer, offer_data = self.get_validate_data(request)
-            # OfferService.checking_quantity_stocks_seller(offer_data)
         except serializers.ValidationError:
             return Response({'You want to sell more stocks than you have'}, status=status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist:

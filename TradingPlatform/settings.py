@@ -18,16 +18,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['0.0.0.0']
 # ALLOWED_HOSTS = ['*']
-# Application definition
-# == == == =
-# # SECURITY WARNING: keep the secret key used in production secret!
-# # SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
-# SECRET_KEY = os.getenv("SECRET_KEY")
-#
-# DEBUG = True
-#
-# ALLOWED_HOSTS = []
-# >> >> >> > develop
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -80,24 +71,13 @@ WSGI_APPLICATION = 'TradingPlatform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-
-        'NAME': 'trading_db',
+        # 'NAME': 'trading_db',
         'NAME': os.getenv("DATABASE_NAME"),
-        'USER': 'postgres',
+        # 'USER': 'postgres',
         'USER': os.getenv("DATABASE_USER"),
-        'PASSWORD': 'admin',
+        # 'PASSWORD': 'admin',
         'PASSWORD': os.getenv("DATABASE_PASSWORD"),
         'HOST': 'db',
-        # =======
-        #         # 'NAME': 'trading_db',
-        #         'NAME': os.getenv("DATABASE_NAME"),
-        #         # 'USER': 'admin',
-        #         'USER': os.getenv("DATABASE_USER"),
-        #         # 'PASSWORD': 'admin',
-        #         'PASSWORD': os.getenv("DATABASE_PASSWORD"),
-        #         # 'HOST': 'localhost',
-        #         'HOST': os.getenv("DATABASE_HOST"),
-        # >>>>>>> develop
         'PORT': '5432'
     }
 }

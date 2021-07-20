@@ -7,30 +7,22 @@ from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 User = get_user_model()
 
 
-class OfferListSerializer(serializers.ModelSerializer):
-    ''' serializer for offer's list (method get) '''
-
-    class Meta:
-        model = Offer
-        exclude = ('price', 'quantity', 'is_active')
-
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username',)
 
 
-class CurrencySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Currency
-        fields = '__all__'
-
-
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = ('code', 'name', 'currency')
+
+
+class CurrencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = '__all__'
 
 
 class ItemDetailSerializer(serializers.ModelSerializer):
@@ -41,10 +33,17 @@ class ItemDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class OfferListSerializer(serializers.ModelSerializer):
+    ''' serializer for offer's list (method get) '''
+
+    class Meta:
+        model = Offer
+        exclude = ('price', 'quantity', 'is_active')
+
+
 class OfferDetailSerializer(serializers.ModelSerializer):
     ''' serializer for offer's detail (method get/post)'''
-    # user = serializers.StringRelatedField()
-    # item = serializers.StringRelatedField()
+
     user = UserSerializer()
     item = ItemSerializer()
 
@@ -93,12 +92,6 @@ class InventoryDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CurrencySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Currency
-        fields = '__all__'
-
-
 class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
@@ -112,10 +105,6 @@ class TradeSerializer(serializers.ModelSerializer):
 
 
 class TradeDetailSerializer(serializers.ModelSerializer):
-    # seller = UserSerializer()
-    # buyer = UserSerializer()
-    # buyer_offer = OfferListSerializer()
-    # seller_offer = OfferListSerializer()
     seller = serializers.StringRelatedField()
     buyer = serializers.StringRelatedField()
     buyer_offer = serializers.StringRelatedField()
