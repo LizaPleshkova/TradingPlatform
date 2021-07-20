@@ -3,25 +3,22 @@ Django settings for TradingPlatform project.
 """
 import os
 from pathlib import Path
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 
-# load_dotenv()
+load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
-# SECRET_KEY = os.getenv("SECRET_KEY")
+# SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,9 +27,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'trading',
+
     'rest_framework',
     'rest_framework_simplejwt',
+
+    'trading',
 ]
 
 MIDDLEWARE = [
@@ -72,13 +71,14 @@ WSGI_APPLICATION = 'TradingPlatform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'trading_db',
-        # 'NAME': os.getenv("DATABASE_NAME"),
-        'USER': 'admin',
-        # 'USER': os.getenv("DATABASE_USER"),
-        'PASSWORD': 'admin',
-        # 'PASSWORD': os.getenv("DATABASE_PASSWORD"),
-        'HOST': 'localhost',
+        # 'NAME': 'trading_db',
+        'NAME': os.getenv("DATABASE_NAME"),
+        # 'USER': 'admin',
+        'USER': os.getenv("DATABASE_USER"),
+        # 'PASSWORD': 'admin',
+        'PASSWORD': os.getenv("DATABASE_PASSWORD"),
+        # 'HOST': 'localhost',
+        'HOST': os.getenv("DATABASE_HOST"),
         'PORT': '5432'
     }
 }
@@ -98,8 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/3.2/topics/i18n/
+# AUTH_USER_MODEL = 'trading.UserProfile'
 
 LANGUAGE_CODE = 'en-us'
 
