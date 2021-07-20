@@ -11,13 +11,13 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
+# SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
 # SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = True
 
-# ALLOWED_HOSTS = ['0.0.0.0', 'localhost']
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['0.0.0.0']
+# ALLOWED_HOSTS = ['*']
 # Application definition
 # == == == =
 # # SECURITY WARNING: keep the secret key used in production secret!
@@ -82,11 +82,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
 
         'NAME': 'trading_db',
-        # 'NAME': os.getenv("DATABASE_NAME"),
+        'NAME': os.getenv("DATABASE_NAME"),
         'USER': 'postgres',
-        # 'USER': os.getenv("DATABASE_USER"),
+        'USER': os.getenv("DATABASE_USER"),
         'PASSWORD': 'admin',
-        # 'PASSWORD': os.getenv("DATABASE_PASSWORD"),
+        'PASSWORD': os.getenv("DATABASE_PASSWORD"),
         'HOST': 'db',
         # =======
         #         # 'NAME': 'trading_db',
