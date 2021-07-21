@@ -1,4 +1,7 @@
+from django.urls import path
 from rest_framework import routers
+
+from . import views
 from .views import OfferListUserView, ItemView, WatchListView, InventoryView, \
     PriceView, CurrencyView, TradeView, ProfitableTransactions
 
@@ -16,3 +19,6 @@ router.register(r'trade', TradeView, basename='trade')
 router.register(r'profitable-transactions', ProfitableTransactions, basename='profitable-transactions')
 
 urlpatterns = router.urls
+urlpatterns += [
+    path('trans/', views.trans_list, name='trans')
+]

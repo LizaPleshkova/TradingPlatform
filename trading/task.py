@@ -1,26 +1,18 @@
-# Прицип работы: Пользователь может создавать Offer на покупку или продажу указывая количество и стоимость.
-# Celery запускает скрипт каждую минуту который ищет подходящие Offers на покупку и продажу.
-# Требования для сделки:
-#           цена покупки <= числа продажи,
-#           количество покупки <= количеству продажи
-# (мы можем купить наши Items у нескольких продавцов), скрипт должен находить выгодные предложения.
-
-
 from celery import Celery
 from .services import TradeService
+
 app = Celery('tasks', broker='pyamqp://guest@localhost//')
+
 
 @app.task
 def add(x, y):
     return x + y
 
 
-@app.tasks
-def requirements_transaction():
-    # Требования для сделки:
-    #           цена покупки <= числа продажи,
-    #           количество покупки <= количеству продажи
-    # (мы можем купить наши Items у нескольких продавцов), скрипт должен находить выгодные предложения.
-
-    # TradeService.requiremenets_for_transaction()
-    pass
+@app.task
+def requirements_transaction(user):
+    # нужно передавать user (который авторизован)
+    print(user)
+    offers = TradeService.requiremenets_for_transaction(user)
+    print(offers)
+    return offers

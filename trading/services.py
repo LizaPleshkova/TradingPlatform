@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
+
+import TradingPlatform
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
     CurrencySerializer, PriceSerializer, TradeSerializer
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, OfferCnoice
@@ -24,52 +26,62 @@ class OfferService(BaseService):
 
 
 class TradeService:
-    # Прицип работы: Пользователь может создавать Offer на покупку или продажу указывая количество и стоимость.
-    # Celery запускает скрипт каждую минуту который ищет подходящие Offers на покупку и продажу.
-    # Требования для сделки:
-    #           цена покупки <= числа продажи,
-    #           количество покупки <= количеству продажи
-    # (мы можем купить наши Items у нескольких продавцов), скрипт должен находить выгодные предложения.
 
     @staticmethod
-    def requiremenets_for_transaction(buyer_user: User):
+    def requiremenets_for_transaction(buyer_user):
         '''
-        должно ли что-то получать на вход?нет
         здесь будет сама логика для поиска заявок:
             1цена покупки <= цена продажи,
             2количество покупки <= количеству продажи
-
-        return объекты ( Offers), кототрые удовлетворяют условиям
+        return ( Offers), кототрые удовлетворяют условиям
         '''
 
+        print('from sevices')
         # получаем все офферы пользователя для покупки
-        user_offers_buyer = Offer.objects.filter(user=buyer_user, type_transaction=OfferCnoice.BUY)
+        user_offers_buyer = Offer.objects.filter(user=buyer_user, type_transaction=OfferCnoice.BUY.name)
+        print('user_offers_buyer', user_offers_buyer)
 
         # получаем все офферы для продажи
-        offers_seller = Offer.objects.filter(type_transaction=OfferCnoice.SELL)
-
+        offers_seller = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name)
+        print(' offers_seller', offers_seller)
         # цикл для проверки самх условий
-
+        out_offers_list = []
         for user_offer in user_offers_buyer:
+            print(' user_offer', user_offer)
             for offer_seller in offers_seller:
-                # \sale_price = Item.objects.get(item_price=user_offer.item)
-                # sale_price_obj = Price.objects.get(item_price=user_offer.item_offer.item_price)
-                # sale_price = sale_price_obj.price # get price for sale
+                print('\t', 'offer_seller', offer_seller)
 
-                # условие (0) : user_offer.item == offer_seller.item # зафвки на одну и ту же items
+                # условие (0) : user_offer.item == offer_seller.item
+                if user_offer.item == offer_seller.item:  # зафвки на одну и ту же items
+                    print('\t\t', '(0) user_offer.item == offer_seller.item', user_offer.item, offer_seller.item)
 
-                # условие (1) : user_offer.price <= sale_price_obj.price
+                    sale_price = TradeService._get_sale_price_item(user_offer)  # get price for sale
+                    print('\t\t', 'sale_price item seller)', sale_price)
 
-                # условие (2) : user_offer.quantity <= offer_seller.quantity
-                # ?можем купить наши Items у нескольких продавцов?
+                    # условие (1) : user_offer.price <= sale_price_obj.price
+                    if user_offer.price <= sale_price:  # цена покупки <= цена продажи
+                        print('\t\t', '(1) user_offer.price ', user_offer.price, ' sale_price ', sale_price)
 
-                # если ок - добавлять в ?список(во что сохранять)
-                pass
+                        # условие (2) : user_offer.quantity <= offer_seller.quantity
+                        if user_offer.quantity <= offer_seller.quantity:  # количество покупки <= количеству продажи
+                            print('\t\t', '(3)', user_offer.quantity,
+                                  offer_seller.quantity)
+                            print('\t\t', 'OK ', end='\n\n')
+                            out_offers_list.append(offer_seller)
+
+        return out_offers_list
+
+    @staticmethod
+    def _get_sale_price_item(user_offer: Offer):
+        ''' get price for sale '''
+        price_item = user_offer.item.item_price.get()
+        print('\t\t', 'price_item', price_item)
+        sale_price = price_item.price
+        return sale_price
 
     @staticmethod
     def updating_user_score(user_id, user_offer: Offer, buyer_offer=None):
         try:
-            # user_profile = get_object_or_404(UserProfile, user_id=user_id)
             user_profile = UserProfile.objects.get(user_id=user_id)
             if user_offer.type_transaction == OfferCnoice.BUY.name:
                 user_profile.score = user_profile.score - user_offer.price * user_offer.quantity
@@ -78,7 +90,6 @@ class TradeService:
             user_profile.save(update_fields=["score"])
         except UserProfile.DoesNotExist:
             return "No UserProfile  matches the given query."
-            # raise ObjectDoesNotExist("No UserProfile  matches the given query.")
 
     @staticmethod
     def updating_inventory_buyer(user: User, user_offer: Offer):
@@ -105,3 +116,39 @@ class TradeService:
         price_item = buyer_offer.item.item_price.get()
         price_item.price += Decimal(buyer_offer.price) * Decimal(0.01)
         price_item.save(update_fields=["price"])
+
+#
+#
+# if '__main__':
+#
+#     import psycopg2
+#
+#     con = psycopg2.connect(
+#         database="trading_db",
+#         user="admin",
+#         password="admin",
+#         host="127.0.0.1",
+#         port="5432"
+#     )
+#
+#     print("Database opened successfully")
+#     cur = con.cursor()
+#     cur.execute("SELECT * from auth_user where id=7")
+#
+#     rows = cur.fetchall()
+#     for row in rows:
+#         print("ADMISSION =", row[0])
+#         print("NAME =", row[1])
+#         print("AGE =", row[2])
+#         print("COURSE =", row[3])
+#         print("DEPARTMENT =", row[4], "\n")
+#
+#     print("Operation done successfully")
+#     con.close()
+#     script, first, second, third = argv
+#
+#     # print("Этот скрипт называется: ", script)
+#     # print("Значение первой переменной: ", first)
+#
+#     user1 = User.objects.get(id=1)
+#     TradeService.requiremenets_for_transaction(user1)

@@ -86,7 +86,7 @@ class Offer(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.user.username}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.quantity} - {self.price}'
 
 
 class Trade(models.Model):
@@ -110,4 +110,4 @@ class Inventory(models.Model):
     quantity = models.IntegerField("Quantity of stocks", default=0)
 
     def __str__(self):
-        return f'{self.id} - {self.user.username} - {self.item.code}'
+        return f'{self.id} - {self.user.username} - {self.item} - {self.quantity}'
