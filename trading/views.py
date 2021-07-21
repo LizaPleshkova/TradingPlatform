@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
 from requests import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status, serializers
@@ -12,8 +13,9 @@ from .serializers import OfferListSerializer, ItemSerializer, WatchListSerialize
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
 from .services import TradeService, OfferService, BaseService
 from rest_framework.decorators import api_view
-from .task import requirements_transaction
-from . import task
+# from .task import requirements_transaction
+# from . import task
+
 User = get_user_model()
 
 
@@ -35,10 +37,12 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
             user = self.request.user
             print(type(user))
             # requirements_transaction.delay(user)
-            # out_offers = TradeService.requiremenets_for_transaction(user)
-            out_offers = task.requirements_transaction.delay(user)
-            serializer = OfferListSerializer(out_offers, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            out_offers = TradeService.requiremenets_for_transaction()
+            # out_offers = task.requirements_transaction.delay(user)
+            # serializer = OfferListSerializer(out_offers, many=True)
+
+            # return Response(serializer.data, status=status.HTTP_200_OK)
+            return JsonResponse(out_offers, safe=False)
         except BaseException as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 

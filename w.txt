@@ -1,0 +1,38 @@
+[
+    {
+        "id": 10,
+        "type_transaction": "SELL",
+        "item": 2,
+        "user": 4
+    },
+    {
+        "id": 9,
+        "type_transaction": "BUY",
+        "item": 2,
+        "user": 5
+    },
+    {
+        "id": 8,
+        "type_transaction": "SELL",
+        "item": 1,
+        "user": 5
+    },
+    {
+        "id": 7,
+        "type_transaction": "BUY",
+        "item": 1,
+        "user": 4
+    },
+    {
+        "id": 11,
+        "type_transaction": "SELL",
+        "item": 1,
+        "user": 1
+    },
+    {
+        "id": 7,
+        "type_transaction": "BUY",
+        "item": 1,
+        "user": 4
+    }
+]
