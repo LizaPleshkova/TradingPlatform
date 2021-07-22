@@ -86,7 +86,7 @@ class Offer(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.quantity} - {self.price}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.quantity} - {self.price} - {self.is_active}'
 
 
 class Trade(models.Model):

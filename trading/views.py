@@ -11,7 +11,7 @@ from .serializers import OfferListSerializer, ItemSerializer, WatchListSerialize
     TradeDetailSerializer, InventoryDetailSerializer, \
     InventorySerializer
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
-from .services import TradeService, OfferService, BaseService
+from .services import TradeService, OfferService, BaseService, ProfitableTransactionsServices
 from rest_framework.decorators import api_view
 # from .task import requirements_transaction
 # from . import task
@@ -37,7 +37,7 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
             user = self.request.user
             print(type(user))
             # requirements_transaction.delay(user)
-            out_offers = TradeService.requiremenets_for_transaction()
+            out_offers = ProfitableTransactionsServices.requiremenets_for_transaction()
             # out_offers = task.requirements_transaction.delay(user)
             # serializer = OfferListSerializer(out_offers, many=True)
 
