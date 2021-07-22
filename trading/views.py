@@ -6,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status, serializers
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
+
+from . import task
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
     CurrencySerializer, PriceSerializer, TradeSerializer, OfferDetailSerializer, ItemDetailSerializer, \
     TradeDetailSerializer, InventoryDetailSerializer, \
@@ -55,13 +57,16 @@ def trans_list(request):
     try:
 
         if request.method == 'GET':
-            user1 = User.objects.get(id=7)
-            print(user1)
-            out_offers = TradeService.requiremenets_for_transaction(user1)
-            serializer = OfferListSerializer(out_offers, many=True)
+
+            task.requirements_transaction.delay()
+            ProfitableTransactionsServices.requiremenets_for_transaction()
+
+            # out_offers = TradeService.requiremenets_for_transaction(user1)
+            # serializer = OfferListSerializer(out_offers, many=True)
             # serializer = TransformerSerializer(transformer, many=True)
             # return JsonResponse(serializer.data, safe=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # return JsonResponse(out_offers, safe=False)
+            return Response(status=status.HTTP_200_OK)
     except BaseException as e:
         return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
