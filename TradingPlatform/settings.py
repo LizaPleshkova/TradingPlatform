@@ -36,9 +36,9 @@ INSTALLED_APPS = [
 
     'trading',
 
-    'flower',
+    # 'flower',
     'celery',
-    'django_celery_results',
+    # 'django_celery_results',
     # 'django_celery_beat',
 ]
 

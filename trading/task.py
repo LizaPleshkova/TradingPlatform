@@ -16,7 +16,7 @@ from .services import TradeService, ProfitableTransactionsServices
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # эта функция выполнится при запуске - настроим вызовы задачи test
-    sender.add_periodic_task(crontab(minute='*/1'), requirements_transaction, name='create trades')
+    sender.add_periodic_task(crontab(minute='*/2'), requirements_transaction, name='create trades')
 
 
 @app.task(name='TradingPlatform.trading.tasks.requirements_transaction')
