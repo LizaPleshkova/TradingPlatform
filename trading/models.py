@@ -3,8 +3,6 @@ from enum import Enum
 from django.db import models
 from django.contrib.auth.models import User
 
-from TradingPlatform import settings
-
 
 class UserProfile(models.Model):
     ''' userprofile with user's score'''
@@ -16,7 +14,7 @@ class UserProfile(models.Model):
     score = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0)
 
     def __str__(self):
-        return f'{self.user.username} - {self.score}'
+        return f'{self.id} - {self.user.username} - {self.score}'
 
 
 class Currency(models.Model):
@@ -25,7 +23,7 @@ class Currency(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return f'{self.code} - {self.name}'
+        return f'{self.id} - {self.code} - {self.name}'
 
     class Meta:
         verbose_name = 'Currency'
@@ -41,7 +39,7 @@ class Item(models.Model):
     description = models.TextField("Details", blank=True, null=True, max_length=500)
 
     def __str__(self):
-        return f'{self.name} - {self.currency.name}'
+        return f'{self.id} - {self.name} - {self.currency.name}'
 
 
 class Price(models.Model):
@@ -53,7 +51,7 @@ class Price(models.Model):
     date = models.DateTimeField(unique=True, blank=True, null=True)
 
     def __str__(self):
-        return f'{self.item} - {self.price}'
+        return f'{self.id} - {self.item} - {self.price}'
 
 
 class WatchList(models.Model):
@@ -88,7 +86,7 @@ class Offer(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.user.username}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.quantity} - {self.price} - {self.is_active}'
 
 
 class Trade(models.Model):
@@ -102,7 +100,7 @@ class Trade(models.Model):
     description = models.TextField(max_length=500, blank=True, null=True, )
 
     def __str__(self):
-        return f'{self.description}'
+        return f'{self.id} - {self.description}'
 
 
 class Inventory(models.Model):
@@ -112,4 +110,4 @@ class Inventory(models.Model):
     quantity = models.IntegerField("Quantity of stocks", default=0)
 
     def __str__(self):
-        return f'{self.user.username} - {self.item.code}'
+        return f'{self.id} - {self.user.username} - {self.item} - {self.quantity}'
