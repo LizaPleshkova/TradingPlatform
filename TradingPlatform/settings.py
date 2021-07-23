@@ -3,6 +3,9 @@ Django settings for TradingPlatform project.
 """
 import os
 from pathlib import Path
+
+from celery import app
+from celery.schedules import crontab
 from dotenv import load_dotenv
 import os
 
@@ -32,6 +35,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     'trading',
+
+    'flower',
+    'celery',
+    'django_celery_results',
+    # 'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -100,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # AUTH_USER_MODEL = 'trading.UserProfile'
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -116,6 +124,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # FOR REDIS AND CELERY
 
+# app.conf.beat_schedule = {
+#
+#     'requirements-every-minutes': {
+#         # Регистрируем задачу. Для этого в качестве значения ключа task
+#         # Указываем полный путь до созданного нами ранее таска(функции)
+#         'task': 'TradingPlatform.tasks.requirements_transaction',
+#
+#         # Периодичность с которой мы будем запускать нашу задачу
+#         # minute='*/5' - говорит о том, что задача должна выполнятся каждые 5 мин.
+#         'schedule': crontab(minute='*/1'),
+#
+#         # Аргументы которые будет принимать функция
+#         # 'args': (*args)
+#     }
+# }
+
 # REDIS_HOST = '0.0.0.0'
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = '6379'
@@ -125,4 +149,4 @@ CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASKS_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_BEAT_SCHEDULE = {}
+# CELERY_BEAT_SCHEDULE = {}

@@ -58,7 +58,7 @@ def trans_list(request):
 
         if request.method == 'GET':
 
-            task.requirements_transaction.delay()
+            # task.requirements_transaction.delay()
             ProfitableTransactionsServices.requiremenets_for_transaction()
 
             # out_offers = TradeService.requiremenets_for_transaction(user1)

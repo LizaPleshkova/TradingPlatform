@@ -78,43 +78,45 @@ class ProfitableTransactionsServices:
             3количество покупки > количеству продажи
         если все ок = сделка
         '''
-        dict_trade = list()
+        # dict_trade = list()
 
         buyer_offers = Offer.objects.filter(type_transaction=OfferCnoice.BUY.name)  # все офферы для покупки
         seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name)  # все офферы для продажи
-        print('buyer_offers', buyer_offers)
-        print('seller_offers', seller_offers)
+        # print('buyer_offers', buyer_offers)
+        # print('seller_offer/', seller_offers)
 
         for buyer_offer in buyer_offers:
-            print('buyer_offer', buyer_offer)
+            # print('buyer_offer', buyer_offer)
             for seller_offer in seller_offers:
-                print('\t', 'seller_offer', seller_offer)
+                # print('\t', 'seller_offer', seller_offer)
 
-                dict_trade = ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
+                # dict_trade = ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
+                ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
 
-        return dict_trade
+        # return dict_trade
 
     @staticmethod
     def checking_offers(buyer_offer, seller_offer):
-        dict_trade = list()
+        # dict_trade = list()
         # условие (0) : user_offer.item == offer_seller.item
         if buyer_offer.item == seller_offer.item and seller_offer.is_active == True and buyer_offer.is_active == True:  # зафвки на одну и ту же items
-            print('\t\t', '(0) user_offer.item == seller_offer.item', buyer_offer.item,
-                  seller_offer.item)
+            # print('\t\t', '(0) user_offer.item == seller_offer.item', buyer_offer.item,
+            #       seller_offer.item)
 
             # условие (1) : user_offer.price <= sale_price_obj.price
             if buyer_offer.price <= seller_offer.price:  # цена покупки <= цена продажи
-                print('\t\t', '(1) buyer_offer.price ', buyer_offer.price, ' seller_offer.price ',
-                      seller_offer.price)
+                # print('\t\t', '(1) buyer_offer.price ', buyer_offer.price, ' seller_offer.price ',
+                #       seller_offer.price)
 
                 # условие (2) : user_offer.quantity <= offer_seller.quantity
-                dict_trade = ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
+                # dict_trade = ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
+                ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
 
-        return dict_trade
+        # return dict_trade
 
     @staticmethod
     def checking_offers_quantity(buyer_offer, seller_offer):
-        dict_trade = list()
+        # dict_trade = list()
         if buyer_offer.quantity <= seller_offer.quantity:  # количество покупки <= количеству продажи
             # купили столько акций, сколько было необходимо ( указано в заявке)
 
@@ -134,7 +136,7 @@ class ProfitableTransactionsServices:
 
             _updating_offer_quantity(seller_offer, buyer_offer)
             _updating_offer_is_active(buyer_offer)
-            dict_trade.append(trade)
+            # dict_trade.append(trade)
 
         elif buyer_offer.quantity > seller_offer.quantity:
             # покупка акций по нескольким офферс
@@ -149,50 +151,20 @@ class ProfitableTransactionsServices:
                 buyer=buyer_offer.user,
                 seller_offer=seller_offer,
                 buyer_offer=buyer_offer,
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
             )
             print('\t\t', 'TRADE ', trade, end='\n\n')
 
             _updating_offer_quantity(buyer_offer, seller_offer)
             _updating_offer_is_active(seller_offer)
 
-            dict_trade.append(trade)
+            # dict_trade.append(trade)
 
-        return dict_trade
+        # return dict_trade
 
 
 class TradeService:
-    # if buyer_offer.quantity <= seller_offer.quantity:  # количество покупки <= количеству продажи
-    #     # купили столько акций, сколько было необходимо ( указано в заявке)
-    #     print('\t\t', '(3)', buyer_offer.quantity, seller_offer.quantity)
-    #     print('\t\t', 'OK ', end='\n\n')
-    #
-    #     seller_offer.quantity = seller_offer.quantity - buyer_offer.quantity
-    #     seller_offer.save(update_fields=["quantity"])
-    #
-    #     buyer_offer.is_active = False
-    #     buyer_offer.save(update_fields=["is_active"])
-    #
-    #     i += 1
-    #     s = OfferListSerializer(seller_offer)
-    #     b = OfferListSerializer(buyer_offer)
-    #     dict_trade.append(s.data)
-    #     dict_trade.append(b.data)
-    #
-    # elif buyer_offer.quantity > seller_offer.quantity:
-    #     # будеv покупать по нескольких заявкам на продажу
-    #     # нужно изменить оффер на покупку (buyer_offer.quantity = buyer_offer.quantity - seller_offer.quantity
-    #     # изменить оффер на продажуу buyer_offer.is_zctive = False
-    #
-    #     buyer_offer.quantity = buyer_offer.quantity - seller_offer.quantity
-    #     buyer_offer.save(update_fields=["quantity"])
-    #
-    #     seller_offer.is_active = False
-    #     seller_offer.save(update_fields=["is_active"])
-    #
-    #     s = OfferListSerializer(seller_offer)
-    #     b = OfferListSerializer(buyer_offer)
-    #     dict_trade.append(s.data)
-    #     dict_trade.append(b.data)
+
     @staticmethod
     def updating_inventory_buyer(seller_offer: Offer, buyer_offer: Offer):
         inventory_buyer, created = Inventory.objects.get_or_create(user=buyer_offer.user, item=buyer_offer.item)
@@ -206,6 +178,7 @@ class TradeService:
                 inventory_buyer.quantity = buyer_offer.quantity
             else:
                 inventory_buyer.quantity += buyer_offer.quantity
+        # print('inventory_buyer.quantity ', inventory_buyer.quantity)
         inventory_buyer.save(update_fields=["quantity"])
 
     @staticmethod
@@ -239,6 +212,7 @@ class TradeService:
                 buyer_profile.score = buyer_profile.score - buyer_offer.quantity * buyer_offer.price
                 # если пользователь продает = деньги добавляются со счета
                 seller_profile.score = seller_profile.score + buyer_offer.quantity * buyer_offer.price
+            # print(' buyer_profile.score ', buyer_profile.score, '\n', 'seller_profile.score', seller_profile.score)
             buyer_profile.save(update_fields=["score"])
             seller_profile.save(update_fields=["score"])
         except UserProfile.DoesNotExist:
@@ -253,6 +227,7 @@ class TradeService:
                 inventory_seller.quantity -= seller_offer.quantity
             else:
                 inventory_seller.quantity -= buyer_offer.quantity
+            # print('inventory_seller.quantity ', inventory_seller.quantity)
             inventory_seller.save(update_fields=["quantity"])
             return inventory_seller
         except Inventory.DoesNotExist:

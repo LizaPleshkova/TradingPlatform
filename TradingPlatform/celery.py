@@ -2,34 +2,25 @@ import os
 import crontab as crontab
 from celery import Celery
 from celery.schedules import crontab
+import os
+import sys
+from celery import Celery
+from celery._state import _set_current_app
+import django
+from django.conf import settings
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'TradingPlatform.settings')
 
 app = Celery('TradingPlatform')
 app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
-
-# # celery beat tasks
-
-# # app.conf.beat_schedule = {
-# #     'send-spam-every-10-minute': {
-# #         'tasks': 'main.tasks.send_beat_email',
-# #         'schedule': crontab(minute='*/10')
-# #     }
-# # }
-
-# app.conf.beat_schedule = {
-#
-#     'requirements-every-5-minuts': {
-#         # Регистрируем задачу. Для этого в качестве значения ключа task
-#         # Указываем полный путь до созданного нами ранее таска(функции)
-#         'task': 'TradingPlatform.tasks.requirements_transaction',
-#
-#         # Периодичность с которой мы будем запускать нашу задачу
-#         # minute='*/5' - говорит о том, что задача должна выполнятся каждые 5 мин.
-#         'schedule': crontab(minute='*/1'),
-#
-#         # Аргументы которые будет принимать функция
-#         # 'args': (*args)
-#     }
-# }
+app.config_from_object('django.conf:settings', namespace='CELERY')
+_set_current_app(app)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../TestProject')))
+django.setup()
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+app.conf.beat_schedule = {
+    'add-every-30-seconds': {
+        'task': 'TradingPlatform.trading.tasks.requirements_transaction',
+        "schedule": 30.0,
+    },
+}
