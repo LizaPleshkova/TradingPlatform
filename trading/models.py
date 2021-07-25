@@ -39,7 +39,7 @@ class Item(models.Model):
     description = models.TextField("Details", blank=True, null=True, max_length=500)
 
     def __str__(self):
-        return f'{self.id} - {self.name} - {self.currency.name}'
+        return f'{self.id} - {self.name}'
 
 
 class Price(models.Model):
@@ -86,7 +86,7 @@ class Offer(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.quantity} - {self.price} - {self.is_active}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username}'
 
 
 class Trade(models.Model):

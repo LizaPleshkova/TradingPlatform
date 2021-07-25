@@ -6,15 +6,14 @@ services:
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:
-#      - POSTGRES_DB=trading_db
-#      - POSTGRES_USER=admin
-#      - POSTGRES_PASSWORD=admin
       - POSTGRES_DB="${DATABASE_NAME}"
       - POSTGRES_USER="${DATABASE_USER}"
       - POSTGRES_PASSWORD="${DATABASE_PASSWORD}"
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: >
+      sh -c "python3 manage.py migrate &&
+        python3 manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     env_file:
@@ -23,3 +22,20 @@ services:
       - "8000:8000"
     depends_on:
       - db
+  redis:
+    image: redis:alpine
+  celery:
+    restart: always
+    build:
+      context: .
+    command: >
+      sh -c "celery -A TradingPlatform worker —pool=solo -l info
+             celery -A TradingPlatform beat -l info"
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - web

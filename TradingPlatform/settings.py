@@ -38,10 +38,8 @@ INSTALLED_APPS = [
 
     'trading',
 
-    # 'flower',
     'celery',
     # 'django_celery_results',
-    # 'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -81,13 +79,10 @@ WSGI_APPLICATION = 'TradingPlatform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'trading_db',
         'NAME': os.getenv("DATABASE_NAME"),
-        # 'USER': 'postgres',
         'USER': os.getenv("DATABASE_USER"),
-        # 'PASSWORD': 'admin',
         'PASSWORD': os.getenv("DATABASE_PASSWORD"),
-        'HOST': 'db',
+        'HOST': os.getenv('DATABASE_HOST'),
         'PORT': '5432'
     }
 }
@@ -108,7 +103,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# AUTH_USER_MODEL = 'trading.UserProfile'
 
 LANGUAGE_CODE = 'ru'
 
@@ -127,24 +121,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # FOR REDIS AND CELERY
 
-# app.conf.beat_schedule = {
-#
-#     'requirements-every-minutes': {
-#         # Регистрируем задачу. Для этого в качестве значения ключа task
-#         # Указываем полный путь до созданного нами ранее таска(функции)
-#         'task': 'TradingPlatform.tasks.requirements_transaction',
-#
-#         # Периодичность с которой мы будем запускать нашу задачу
-#         # minute='*/5' - говорит о том, что задача должна выполнятся каждые 5 мин.
-#         'schedule': crontab(minute='*/1'),
-#
-#         # Аргументы которые будет принимать функция
-#         # 'args': (*args)
-#     }
-# }
-
 # REDIS_HOST = '0.0.0.0'
-REDIS_HOST = '127.0.0.1'
+# REDIS_HOST = '127.0.0.1'
+REDIS_HOST = os.getenv('DATABASE_HOST')
 REDIS_PORT = '6379'
 CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
 CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 1200}

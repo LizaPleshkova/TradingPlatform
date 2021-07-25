@@ -1,75 +1,21 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-
 from django.http import JsonResponse
 from requests import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status, serializers
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 
-from . import task
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
     CurrencySerializer, PriceSerializer, TradeSerializer, OfferDetailSerializer, ItemDetailSerializer, \
     TradeDetailSerializer, InventoryDetailSerializer, \
-    InventorySerializer
+    InventorySerializer, PriceDetailSerializer, CurrencyDetailSerializer
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
 from .services import TradeService, OfferService, BaseService, ProfitableTransactionsServices
-from rest_framework.decorators import api_view
-# from .task import requirements_transaction
-# from . import task
 
 User = get_user_model()
-
-
-class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self, *args, **kwargs):
-        queryset = Offer.objects.filter(user=self.request.user)
-        return queryset
-
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return OfferListSerializer
-        # self.action == 'retrieve' or
-        # return ItemSerializer
-
-    def list(self, request, *args, **kwargs):
-        try:
-            user = self.request.user
-            print(type(user))
-            # requirements_transaction.delay(user)
-            out_offers = ProfitableTransactionsServices.requiremenets_for_transaction()
-            # out_offers = task.requirements_transaction.delay(user)
-            # serializer = OfferListSerializer(out_offers, many=True)
-
-            # return Response(serializer.data, status=status.HTTP_200_OK)
-            return JsonResponse(out_offers, safe=False)
-        except BaseException as e:
-            return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view()
-def trans_list(request):
-    """
-
-    """
-    try:
-
-        if request.method == 'GET':
-
-            # task.requirements_transaction.delay()
-            ProfitableTransactionsServices.requiremenets_for_transaction()
-
-            # out_offers = TradeService.requiremenets_for_transaction(user1)
-            # serializer = OfferListSerializer(out_offers, many=True)
-            # serializer = TransformerSerializer(transformer, many=True)
-            # return JsonResponse(serializer.data, safe=False)
-            # return JsonResponse(out_offers, safe=False)
-            return Response(status=status.HTTP_200_OK)
-    except BaseException as e:
-        return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet, OfferService):
@@ -138,20 +84,27 @@ class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 
 class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = CurrencySerializer
     queryset = Currency.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' or self.action == 'create':
+            return CurrencyDetailSerializer
+        return CurrencySerializer
 
 
 class PriceView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = PriceSerializer
     queryset = Price.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' or self.action == 'create':
+            return PriceDetailSerializer
+        return PriceSerializer
 
 
 class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet,
                 TradeService, BaseService):
     permission_classes = (IsAuthenticated,)
-    serializer_class = TradeSerializer
 
     def get_queryset(self):
         # queryset = Trade.objects.filter(buyer=self.request.user)
@@ -188,4 +141,23 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
         except ObjectDoesNotExist as e:
             # print(getattr(e, 'message', repr(e)))
             # print(dir(repr(e).title().), repr(e).title())
+            return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TradeDetailSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = Offer.objects.filter(user=self.request.user)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            user = self.request.user
+            ProfitableTransactionsServices.requiremenets_for_transaction()
+            # out_offers = task.requirements_transaction.delay(user)
+            return Response(status=status.HTTP_200_OK)
+            # return JsonResponse(out_offers, safe=False)
+        except BaseException as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
