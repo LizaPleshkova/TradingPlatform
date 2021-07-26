@@ -37,7 +37,7 @@ def _updating_offer_is_active(offer):
 class ProfitableTransactionsServices:
 
     @staticmethod
-    def requiremenets_for_transaction():
+    def requirements_for_transaction():
         '''
        сама логика для поиска заявок:
             0items равны в офферах на покупку\продажу + офферы is_active=True

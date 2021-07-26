@@ -155,7 +155,7 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
     def list(self, request, *args, **kwargs):
         try:
             user = self.request.user
-            ProfitableTransactionsServices.requiremenets_for_transaction()
+            ProfitableTransactionsServices.requirements_for_transaction()
             # out_offers = task.requirements_transaction.delay(user)
             return Response(status=status.HTTP_200_OK)
             # return JsonResponse(out_offers, safe=False)

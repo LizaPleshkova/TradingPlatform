@@ -29,7 +29,7 @@ services:
     build:
       context: .
     command: >
-      sh -c "celery -A TradingPlatform worker —pool=solo -l info
+      sh -c "celery -A TradingPlatform worker --pool=solo -l info &&
              celery -A TradingPlatform beat -l info"
     volumes:
       - .:/code
