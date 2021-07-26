@@ -122,11 +122,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # FOR REDIS AND CELERY
 
 # REDIS_HOST = '0.0.0.0'
-# REDIS_HOST = '127.0.0.1'
-REDIS_HOST = os.getenv('DATABASE_HOST')
+REDIS_HOST = '127.0.0.1'
+# REDIS_HOST = os.getenv('DATABASE_HOST')
 REDIS_PORT = '6379'
 CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
-CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 1200}
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
 CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASKS_SERIALIZER = 'json'
