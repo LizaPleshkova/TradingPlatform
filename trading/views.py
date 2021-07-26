@@ -33,6 +33,7 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
 
     def create(self, request, *args, **kwargs):
         try:
+            print(request.data)
             serializer, offer_data = self.get_validate_data(request)
         except serializers.ValidationError as e:
             return Response(e.detail['non_field_errors'], status=status.HTTP_400_BAD_REQUEST)

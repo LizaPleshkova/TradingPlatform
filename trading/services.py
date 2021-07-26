@@ -12,7 +12,11 @@ class BaseService:
 
     def get_validate_data(self, request):
         serializer = self.get_serializer(data=request.data)
+
+
         serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
+        print('serializer.validated_data', serializer.validated_data)
         return serializer, serializer.validated_data
 
 
@@ -20,6 +24,7 @@ class OfferService(BaseService):
 
     def get_validate_data(self, request):
         request.data['user'] = request.user.id
+        print(request.data['user'])
         return super(OfferService, self).get_validate_data(request)
 
 

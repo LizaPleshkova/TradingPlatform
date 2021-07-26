@@ -57,18 +57,25 @@ class OfferDetailSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """ checking quantity seller's stocks """
         try:
+            print('from validate')
             if data.get('type_transaction') == OfferCnoice.SELL.name:
+                print('SELL')
                 inventory_seller = Inventory.objects.get(user=data.get('user'),
                                                                   item=data.get('item'))
-                if inventory_seller.quantity < data.get('quantity'):
+                print(inventory_seller)
+                print(inventory_seller.quantity, data.get('quantity'))
+
+                if inventory_seller.quantity <= data.get('quantity'):
+                    print(inventory_seller.quantity , data.get('quantity'))
                     raise serializers.ValidationError(('You want to sell more stocks than you have'), code='invalid')
             if data.get('type_transaction') == OfferCnoice.BUY.name:
+                print('buy')
                 buyer_profile = UserProfile.objects.get(user=data.get('user'))
-                print(data.get('quantity') * data.get('price'))
+                print(buyer_profile)
                 if buyer_profile.score <= (data.get('quantity') * data.get('price')):
                     raise serializers.ValidationError(
                         ("There aren't enough cash in the account to buy such a quantity of dtocks"), code='invalid')
-
+            return data
         except Inventory.DoesNotExist:
             raise ObjectDoesNotExist('No Inventory seller matches the given query')
 

@@ -20,7 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = True
 
 # ALLOWED_HOSTS = ['0.0.0.0']
-# # ALLOWED_HOSTS = ['*']
 
 ALLOWED_HOSTS = ['*']
 
@@ -121,8 +120,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # FOR REDIS AND CELERY
 
-REDIS_HOST = '0.0.0.0'
+# REDIS_HOST = '0.0.0.0'
 # REDIS_HOST = os.getenv('DATABASE_HOST')
+REDIS_HOST = 'redis'
 # REDIS_HOST = '127.0.0.1'
 REDIS_PORT = '6379'
 CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
