@@ -12,7 +12,11 @@ class BaseService:
 
     def get_validate_data(self, request):
         serializer = self.get_serializer(data=request.data)
+
+
         serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
+        print('serializer.validated_data', serializer.validated_data)
         return serializer, serializer.validated_data
 
 
@@ -20,39 +24,149 @@ class OfferService(BaseService):
 
     def get_validate_data(self, request):
         request.data['user'] = request.user.id
+        print(request.data['user'])
         return super(OfferService, self).get_validate_data(request)
+
+
+def _updating_offer_quantity(offer1, offer2):
+    ''' offer1 > offer2 '''
+    offer1.quantity = offer1.quantity - offer2.quantity
+    offer1.save(update_fields=["quantity"])
+
+
+def _updating_offer_is_active(offer):
+    offer.is_active = False
+    offer.save(update_fields=["is_active"])
+
+
+class ProfitableTransactionsServices:
+
+    @staticmethod
+    def requirements_for_transaction():
+        '''
+       сама логика для поиска заявок:
+            0items равны в офферах на покупку\продажу + офферы is_active=True
+            1цена покупки <= цена продажи,
+            2количество покупки <= количеству продажи
+            3количество покупки > количеству продажи
+        если все ок = сделка
+        '''
+        buyer_offers = Offer.objects.filter(type_transaction=OfferCnoice.BUY.name)  # все офферы для покупки
+        seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name)  # все офферы для продажи
+
+        for buyer_offer in buyer_offers:
+            for seller_offer in seller_offers:
+                ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
+
+    @staticmethod
+    def checking_offers(buyer_offer, seller_offer):
+        # условие (0) : user_offer.item == offer_seller.item
+        if buyer_offer.item == seller_offer.item and seller_offer.is_active == True and buyer_offer.is_active == True:  # зафвки на одну и ту же items
+
+            # условие (1) : user_offer.price <= sale_price_obj.price
+            if buyer_offer.price <= seller_offer.price:  # цена покупки <= цена продажи
+
+                # условие (2) : user_offer.quantity <= offer_seller.quantity
+                ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
+
+    @staticmethod
+    def checking_offers_quantity(buyer_offer, seller_offer):
+        if buyer_offer.quantity <= seller_offer.quantity:  # количество покупки <= количеству продажи
+            # купили столько акций, сколько было необходимо ( указано в заявке)
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
+
+            trade = Trade.objects.create(
+                seller=seller_offer.user,
+                buyer=buyer_offer.user,
+                seller_offer=seller_offer,
+                buyer_offer=buyer_offer,
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+            )
+
+            if buyer_offer.quantity - seller_offer.quantity == 0:
+                _updating_offer_is_active(seller_offer)
+            _updating_offer_quantity(seller_offer, buyer_offer)
+            _updating_offer_is_active(buyer_offer)
+
+        elif buyer_offer.quantity > seller_offer.quantity:
+            # покупка акций по нескольким офферс
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
+
+            trade = Trade.objects.create(
+                seller=seller_offer.user,
+                buyer=buyer_offer.user,
+                seller_offer=seller_offer,
+                buyer_offer=buyer_offer,
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+            )
+
+            _updating_offer_quantity(buyer_offer, seller_offer)
+            _updating_offer_is_active(seller_offer)
+
 
 class TradeService:
 
     @staticmethod
-    def updating_user_score(user_id, user_offer: Offer, buyer_offer=None):
+    def updating_inventory_buyer(seller_offer: Offer, buyer_offer: Offer):
+        inventory_buyer, created = Inventory.objects.get_or_create(user=buyer_offer.user, item=buyer_offer.item)
+        if buyer_offer.quantity > seller_offer.quantity:
+            if created:
+                inventory_buyer.quantity = seller_offer.quantity
+            else:
+                inventory_buyer.quantity += seller_offer.quantity
+        elif buyer_offer.quantity <= seller_offer.quantity:
+            if created:
+                inventory_buyer.quantity = buyer_offer.quantity
+            else:
+                inventory_buyer.quantity += buyer_offer.quantity
+        inventory_buyer.save(update_fields=["quantity"])
+
+    @staticmethod
+    def _get_sale_price_item(user_offer: Offer):
+        ''' get price for sale '''
+        price_item = user_offer.item.item_price.get()
+        sale_price = price_item.price
+        return sale_price
+
+    @staticmethod
+    def updating_users_score(seller_offer: Offer, buyer_offer: Offer):
+        '''
+         если пользователь покупает = деньги списываются со счета
+         если пользователь продает = деньги добавляются со счета
+        '''
         try:
-            # user_profile = get_object_or_404(UserProfile, user_id=user_id)
-            user_profile = UserProfile.objects.get(user_id=user_id)
-            if user_offer.type_transaction == OfferCnoice.BUY.name:
-                user_profile.score = user_profile.score - user_offer.price * user_offer.quantity
-            elif user_offer.type_transaction == OfferCnoice.SELL.name:
-                user_profile.score = user_profile.score + buyer_offer.price * buyer_offer.quantity
-            user_profile.save(update_fields=["score"])
+            seller_profile = UserProfile.objects.get(user_id=seller_offer.user.id)
+            buyer_profile = UserProfile.objects.get(user_id=buyer_offer.user.id)
+
+            if buyer_offer.quantity > seller_offer.quantity:
+                buyer_profile.score = buyer_profile.score - seller_offer.quantity * buyer_offer.price
+                seller_profile.score = seller_profile.score + seller_offer.quantity * buyer_offer.price
+            elif buyer_offer.quantity <= seller_offer.quantity:
+                buyer_profile.score = buyer_profile.score - buyer_offer.quantity * buyer_offer.price
+                seller_profile.score = seller_profile.score + buyer_offer.quantity * buyer_offer.price
+
+            buyer_profile.save(update_fields=["score"])
+            seller_profile.save(update_fields=["score"])
         except UserProfile.DoesNotExist:
             return "No UserProfile  matches the given query."
-            # raise ObjectDoesNotExist("No UserProfile  matches the given query.")
 
     @staticmethod
-    def updating_inventory_buyer(user: User, user_offer: Offer):
-        inventory_buyer, created = Inventory.objects.get_or_create(user=user, item=user_offer.item)
-        if created:
-            inventory_buyer.quantity = user_offer.quantity
-        else:
-            inventory_buyer.quantity += user_offer.quantity
-        inventory_buyer.save(update_fields=["quantity"])
-        return inventory_buyer
-
-    @staticmethod
-    def updating_inventory_seller(user: User, user_offer: Offer, buyer_offer: Offer):
+    def updating_inventory_seller(seller_offer: Offer, buyer_offer: Offer):
+        '''updating_inventory_seller'''
         try:
-            inventory_seller = Inventory.objects.get(user=user, item=user_offer.item)
-            inventory_seller.quantity -= buyer_offer.quantity
+            inventory_seller = Inventory.objects.get(user=seller_offer.user, item=seller_offer.item)
+            if buyer_offer.quantity > seller_offer.quantity:
+                inventory_seller.quantity -= seller_offer.quantity
+            else:
+                inventory_seller.quantity -= buyer_offer.quantity
             inventory_seller.save(update_fields=["quantity"])
             return inventory_seller
         except Inventory.DoesNotExist:

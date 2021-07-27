@@ -3,8 +3,6 @@ from enum import Enum
 from django.db import models
 from django.contrib.auth.models import User
 
-from TradingPlatform import settings
-
 
 class UserProfile(models.Model):
     ''' userprofile with user's score'''
@@ -41,7 +39,7 @@ class Item(models.Model):
     description = models.TextField("Details", blank=True, null=True, max_length=500)
 
     def __str__(self):
-        return f'{self.id} - {self.name} - {self.currency.name}'
+        return f'{self.id} - {self.name}'
 
 
 class Price(models.Model):
@@ -88,7 +86,7 @@ class Offer(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.user.username}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username}'
 
 
 class Trade(models.Model):
@@ -112,4 +110,4 @@ class Inventory(models.Model):
     quantity = models.IntegerField("Quantity of stocks", default=0)
 
     def __str__(self):
-        return f'{self.id} - {self.user.username} - {self.item.code}'
+        return f'{self.id} - {self.user.username} - {self.item} - {self.quantity}'

@@ -1,16 +1,19 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework.exceptions import ValidationError
+from django.http import JsonResponse
+from requests import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status, serializers
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
+
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
     CurrencySerializer, PriceSerializer, TradeSerializer, OfferDetailSerializer, ItemDetailSerializer, \
     TradeDetailSerializer, InventoryDetailSerializer, \
-    InventorySerializer
+    InventorySerializer, PriceDetailSerializer, CurrencyDetailSerializer
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
-from .services import TradeService, OfferService, BaseService
+from .services import TradeService, OfferService, BaseService, ProfitableTransactionsServices
 
 User = get_user_model()
 
@@ -30,6 +33,7 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
 
     def create(self, request, *args, **kwargs):
         try:
+            print(request.data)
             serializer, offer_data = self.get_validate_data(request)
         except serializers.ValidationError as e:
             return Response(e.detail['non_field_errors'], status=status.HTTP_400_BAD_REQUEST)
@@ -81,23 +85,30 @@ class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 
 class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = CurrencySerializer
     queryset = Currency.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' or self.action == 'create':
+            return CurrencyDetailSerializer
+        return CurrencySerializer
 
 
 class PriceView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = PriceSerializer
     queryset = Price.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' or self.action == 'create':
+            return PriceDetailSerializer
+        return PriceSerializer
 
 
 class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet,
                 TradeService, BaseService):
     permission_classes = (IsAuthenticated,)
-    serializer_class = TradeSerializer
 
     def get_queryset(self):
-        queryset = Trade.objects.filter(buyer=self.request.user)
+        # queryset = Trade.objects.filter(buyer=self.request.user)
         queryset = Trade.objects.all()
         return queryset
 
@@ -131,4 +142,23 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
         except ObjectDoesNotExist as e:
             # print(getattr(e, 'message', repr(e)))
             # print(dir(repr(e).title().), repr(e).title())
+            return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TradeDetailSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = Offer.objects.filter(user=self.request.user)
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        try:
+            user = self.request.user
+            ProfitableTransactionsServices.requirements_for_transaction()
+            # out_offers = task.requirements_transaction.delay(user)
+            return Response(status=status.HTTP_200_OK)
+            # return JsonResponse(out_offers, safe=False)
+        except BaseException as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)

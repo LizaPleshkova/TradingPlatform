@@ -3,22 +3,26 @@ Django settings for TradingPlatform project.
 """
 import os
 from pathlib import Path
+
+from celery import app
+from celery.schedules import crontab
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
-SECRET_KEY = os.getenv("SECRET_KEY")
+# SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = ['0.0.0.0']
+
+ALLOWED_HOSTS = ['*']
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -32,6 +36,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     'trading',
+
+    'celery',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -71,14 +78,10 @@ WSGI_APPLICATION = 'TradingPlatform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'trading_db',
         'NAME': os.getenv("DATABASE_NAME"),
-        # 'USER': 'admin',
         'USER': os.getenv("DATABASE_USER"),
-        # 'PASSWORD': 'admin',
         'PASSWORD': os.getenv("DATABASE_PASSWORD"),
-        # 'HOST': 'localhost',
-        'HOST': os.getenv("DATABASE_HOST"),
+        'HOST': os.getenv('DATABASE_HOST'),
         'PORT': '5432'
     }
 }
@@ -98,9 +101,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# AUTH_USER_MODEL = 'trading.UserProfile'
 
-LANGUAGE_CODE = 'en-us'
+
+LANGUAGE_CODE = 'ru'
+
 
 TIME_ZONE = 'UTC'
 
@@ -113,3 +117,18 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# FOR REDIS AND CELERY
+
+# REDIS_HOST = '0.0.0.0'
+# REDIS_HOST = os.getenv('DATABASE_HOST')
+REDIS_HOST = 'redis'
+# REDIS_HOST = '127.0.0.1'
+REDIS_PORT = '6379'
+CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
+CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASKS_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_BEAT_SCHEDULE = {}

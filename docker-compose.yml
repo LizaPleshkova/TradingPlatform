@@ -1,0 +1,48 @@
+version: '3.3'
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+  web:
+    build: .
+    command: >
+      sh -c "python3 manage.py migrate &&
+        python3 manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  celery:
+    restart: always
+    build:
+      context: .
+    command: celery -A TradingPlatform worker --pool=solo -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - web
+      - db
+      - redis
+  celery-beat:
+    restart: always
+    build:
+      context: .
+    command: celery -A TradingPlatform beat -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - celery
