@@ -14,7 +14,6 @@ services:
     command: >
       sh -c "python3 manage.py migrate &&
         python3 manage.py runserver 0.0.0.0:8000"
-
     volumes:
       - .:/code
     env_file:
@@ -31,18 +30,19 @@ services:
     restart: always
     build:
       context: .
-    command: >
-      sh -c "celery -A TradingPlatform worker --pool=solo -l info &&
-            celery -A TradingPlatform beat -l info"
+    command: celery -A TradingPlatform worker --pool=solo -l info
     volumes:
       - .:/code
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=${DATABASE_NAME}
-      - POSTGRES_USER=${DATABASE_USER}
-      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
     depends_on:
       - web
       - db
       - redis
+  celery-beat:
+    restart: always
+    build:
+      context: .
+    command: celery -A TradingPlatform beat -l info
+    volumes:
+      - .:/code
+    depends_on:
+      - celery

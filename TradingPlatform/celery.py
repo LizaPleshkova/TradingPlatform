@@ -18,6 +18,6 @@ app.autodiscover_tasks(settings.INSTALLED_APPS)
 app.conf.beat_schedule = {
     'add-every-30-seconds': {
         'task': 'TradingPlatform.trading.tasks.requirements_transaction',
-        "schedule": 30.0,
+        "schedule": 60.0,
     },
 }
