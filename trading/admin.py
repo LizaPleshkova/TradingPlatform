@@ -24,7 +24,6 @@ class PriceAdmin(admin.ModelAdmin):
 class OfferAdmin(admin.ModelAdmin):
     list_display = ('id', 'type_transaction', 'item', 'user' , 'is_active',)
     list_filter = ['type_transaction', 'item', 'user', 'is_active']
-    # search_fields = ['']
 
 
 class TradeAdmin(admin.ModelAdmin):

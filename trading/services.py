@@ -12,11 +12,7 @@ class BaseService:
 
     def get_validate_data(self, request):
         serializer = self.get_serializer(data=request.data)
-
-
         serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
-        print('serializer.validated_data', serializer.validated_data)
         return serializer, serializer.validated_data
 
 
@@ -24,7 +20,6 @@ class OfferService(BaseService):
 
     def get_validate_data(self, request):
         request.data['user'] = request.user.id
-        print(request.data['user'])
         return super(OfferService, self).get_validate_data(request)
 
 
@@ -43,14 +38,6 @@ class ProfitableTransactionsServices:
 
     @staticmethod
     def requirements_for_transaction():
-        '''
-       сама логика для поиска заявок:
-            0items равны в офферах на покупку\продажу + офферы is_active=True
-            1цена покупки <= цена продажи,
-            2количество покупки <= количеству продажи
-            3количество покупки > количеству продажи
-        если все ок = сделка
-        '''
         buyer_offers = Offer.objects.filter(type_transaction=OfferCnoice.BUY.name)  # все офферы для покупки
         seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name)  # все офферы для продажи
 
@@ -60,18 +47,14 @@ class ProfitableTransactionsServices:
 
     @staticmethod
     def checking_offers(buyer_offer, seller_offer):
-        # условие (0) : user_offer.item == offer_seller.item
         if buyer_offer.item == seller_offer.item and seller_offer.is_active == True and buyer_offer.is_active == True:  # зафвки на одну и ту же items
 
-            # условие (1) : user_offer.price <= sale_price_obj.price
-            if buyer_offer.price <= seller_offer.price:  # цена покупки <= цена продажи
-
-                # условие (2) : user_offer.quantity <= offer_seller.quantity
+            if buyer_offer.price <= seller_offer.price:
                 ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
 
     @staticmethod
     def checking_offers_quantity(buyer_offer, seller_offer):
-        if buyer_offer.quantity <= seller_offer.quantity:  # количество покупки <= количеству продажи
+        if buyer_offer.quantity <= seller_offer.quantity:
             # купили столько акций, сколько было необходимо ( указано в заявке)
 
             TradeService.updating_users_score(seller_offer, buyer_offer)
@@ -138,10 +121,6 @@ class TradeService:
 
     @staticmethod
     def updating_users_score(seller_offer: Offer, buyer_offer: Offer):
-        '''
-         если пользователь покупает = деньги списываются со счета
-         если пользователь продает = деньги добавляются со счета
-        '''
         try:
             seller_profile = UserProfile.objects.get(user_id=seller_offer.user.id)
             buyer_profile = UserProfile.objects.get(user_id=buyer_offer.user.id)

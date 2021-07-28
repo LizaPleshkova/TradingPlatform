@@ -108,7 +108,6 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        # queryset = Trade.objects.filter(buyer=self.request.user)
         queryset = Trade.objects.all()
         return queryset
 
@@ -140,8 +139,6 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
             headers = self.get_success_headers(serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ObjectDoesNotExist as e:
-            # print(getattr(e, 'message', repr(e)))
-            # print(dir(repr(e).title().), repr(e).title())
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
 
