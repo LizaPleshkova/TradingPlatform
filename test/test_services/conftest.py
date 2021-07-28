@@ -31,74 +31,87 @@ def api_rf():
 
     return APIRequestFactory()
 
-#
-# @pytest.fixture
-# def service_setup(self, signals_setup):
-#     # print(signals_setup)
-#     user1= signals_setup
-#     # print(user1)
-#     # user2 = User.objects.get(id=1)
-#     # user2 = User.objects.create(username='admin', password1=123, password2=123)
-#     currency1 = Currency.objects.create(code='AAPLE', name='apple')
-#     item1 = Item.objects.create(code='aaple1', name='apple1', currency=currency1)
-#     price1 = Price.objects.create(item=item1, currency=currency1, price=120)
-#     offer1 = Offer.objects.create(
-#         type_transaction=OfferCnoice.BUY.name,
-#         item=item1,
-#         user=user1,
-#         price=100,
-#         quantity=2,
-#     )
-#     # offer1 = Offer.objects.create(
-#     #     type_transaction=OfferCnoice.BUY.name,
-#     #     item=item1,
-#     #     user=user1,
-#     #     price=100,
-#     #     quantity=2,
-#     # )
-#     inventory1 = Inventory.objects.create(item=item1, user=user1, quantity=2)
-#
-#     # self.user = User.objects.create_user(
-#     #     nome='test',
-#     #     email='test@email.com',
-#     #     password='test',
-#     # )
-#     # token, created = Token.objects.get_or_create(user=self.user)
-#     # self.client = Client(HTTP_AUTHORIZATION='Token ' + token.key)
-#
-#     return user1, currency1, item1, price1, offer1, inventory1
-#
+
 @pytest.fixture
-def api_client():
+def service_setup():
+    # print(signals_setup)
+    # user1 = signals_setup
+    # print(user1)
+    # user2 = User.objects.get(id=1)
+    # user1 = User.objects.create(username='admin', password=123)
+    currency1 = Currency.objects.create(code='AAPLE', name='apple')
+    currency2 = Currency.objects.create(code='lll', name='lll')
+    item1 = Item.objects.create(code='aaple1', name='apple1', currency=currency1)
+    price1 = Price.objects.create(item=item1, currency=currency1, price=120)
+    # offer1 = Offer.objects.create(
+    #     type_transaction=OfferCnoice.BUY.name,
+    #     item=item1,
+    #     user=user1,
+    #     price=100,
+    #     quantity=2,
+    # )
+    # offer1 = Offer.objects.create(
+    #     type_transaction=OfferCnoice.BUY.name,
+    #     item=item1,
+    #     user=user1,
+    #     price=100,
+    #     quantity=2,
+    # )
+    # inventory1 = Inventory.objects.create(item=item1, user=user1, quantity=2)
+    return currency1, item1, price1
+
+
+@pytest.fixture
+def api_client1():
     user = User.objects.create_user(username='john', email='js@js.com', password='123')
     client = APIClient()
     refresh = RefreshToken.for_user(user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     return client
 
+
 @pytest.fixture
-def api_client():
+def inventory_setup(service_setup):
+    user2 = User.objects.get(id=2)
+    inventory1 = Inventory.objects.create(item=service_setup[1], user=user2, quantity=0)
+    return inventory1
+
+
+@pytest.fixture
+def api_client2():
     user = User.objects.create_user(username='john', email='js@js.com', password='123')
     client = APIClient()
     refresh = RefreshToken.for_user(user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     return client
+
+
 # @pytest.fixture
-# def signals_setup():
-#     user1 = mixer.blend(User)
-#     return user1
+# def api_client():
+#     user = User.objects.create_user(username='admin', password=123)
+#     client = APIClient()
+#     refresh = RefreshToken.for_user(user)
+#     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+#     return client
+#
 
 @pytest.fixture
-def for_token_setup():
-    user1 = mixer.blend(User)
-    return user1
+def user1_setup():
+    user = User.objects.create(username='john', email='js@js.com', password='123')
+    return user
 
 
 @pytest.fixture
-def api_fact():
+def user2_setup():
+    user = User.objects.create(username='john', email='js@js.com', password='123')
+    return user
+
+
+@pytest.fixture
+def api_fact(user_setup):
     user = User.objects.create_user(username='john', email='js@js.com', password='123')
     factory = APIRequestFactory()
-    refresh = RefreshToken.for_user(user)
+    refresh = RefreshToken.for_user(user_setup)
     # token, created = Token.objects.get_or_create(user=self.user)
     # client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     return factory
