@@ -33,7 +33,6 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
 
     def create(self, request, *args, **kwargs):
         try:
-            print(request.data)
             serializer, offer_data = self.get_validate_data(request)
         except serializers.ValidationError as e:
             return Response(e.detail['non_field_errors'], status=status.HTTP_400_BAD_REQUEST)
@@ -108,7 +107,6 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        # queryset = Trade.objects.filter(buyer=self.request.user)
         queryset = Trade.objects.all()
         return queryset
 
@@ -140,8 +138,6 @@ class TradeView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
             headers = self.get_success_headers(serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except ObjectDoesNotExist as e:
-            # print(getattr(e, 'message', repr(e)))
-            # print(dir(repr(e).title().), repr(e).title())
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
 
