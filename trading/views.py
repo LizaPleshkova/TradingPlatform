@@ -1,11 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
 from requests import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, viewsets, status, serializers
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 
 from .serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
@@ -22,7 +20,6 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self, *args, **kwargs):
-        # queryset = Offer.objects.filter(user=self.request.user)
         queryset = Offer.objects.all()
         return queryset
 
@@ -153,8 +150,6 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
         try:
             user = self.request.user
             ProfitableTransactionsServices.requirements_for_transaction()
-            # out_offers = task.requirements_transaction.delay(user)
             return Response(status=status.HTTP_200_OK)
-            # return JsonResponse(out_offers, safe=False)
         except BaseException as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)

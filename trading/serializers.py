@@ -60,7 +60,7 @@ class OfferDetailSerializer(serializers.ModelSerializer):
             if data.get('type_transaction') == OfferCnoice.SELL.name:
                 inventory_seller = Inventory.objects.get(user=data.get('user'),
                                                          item=data.get('item'))
-
+                print('inventory_seller', inventory_seller)
                 if inventory_seller.quantity <= data.get('quantity'):
                     raise serializers.ValidationError('You want to sell more stocks than you have', code='invalid')
             if data.get('type_transaction') == OfferCnoice.BUY.name:

@@ -10,8 +10,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET_KEY = 'django-insecure-km8!@_)7)%(we8qspi3ku8cc4@q*w8#n3(flu0hf6=(xl&rj&$'
-
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
@@ -108,8 +106,6 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # FOR REDIS AND CELERY
-
-
 REDIS_HOST = 'redis'
 REDIS_PORT = '6379'
 CELERY_BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT + '/0'

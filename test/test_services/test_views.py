@@ -1,236 +1,236 @@
+import datetime
 import json
-
-import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from django.test.client import Client
-from django.urls import reverse
-from pytest_django.lazy_django import skip_if_no_django
-from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
-
 import pytest
-from rest_framework import status, serializers
-
-from rest_framework.test import APIClient, APIRequestFactory
-from trading.serializers import OfferListSerializer, ItemSerializer, WatchListSerializer, \
-    CurrencySerializer, PriceSerializer, TradeSerializer, CurrencyDetailSerializer, OfferDetailSerializer
-from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, OfferCnoice
-from trading.services import TradeService, OfferService, BaseService, ProfitableTransactionsServices
-from trading.services import TradeService, OfferService, BaseService, ProfitableTransactionsServices, \
-    _updating_offer_quantity, _updating_offer_is_active
-from trading.views import OfferListUserView, ItemView, WatchListView, InventoryView, \
-    PriceView, CurrencyView, TradeView, ProfitableTransactions
+from rest_framework import status
+from trading.serializers import ItemSerializer, WatchListSerializer, \
+    CurrencySerializer, PriceSerializer, CurrencyDetailSerializer, OfferDetailSerializer, \
+    InventorySerializer, PriceDetailSerializer, ItemDetailSerializer
+from trading.models import Currency, Item, Price, WatchList, Inventory, UserProfile, OfferCnoice
 
 User = get_user_model()
 
 
-#
-# @pytest.mark.django_db
-# def test_updating_offer_quantity(service_setup):
-#     ''' test the create of user's profile after creation user'''
-#     offer1 = Offer.objects.get(id=1)
-#     assert offer1.is_active == True
-#     _updating_offer_is_active(offer1)
-#     assert offer1.is_active == False
-
-#
-# request = self.factory.get('test-user')
-# force_authenticate(request, user=self.user1, token=self.user1_token)
-#
-# response = TestUserView.as_view()(request)
-#
-# question = Test.objects.filter(test__user=self.user1)
-# serializer = MyTestListSerializer(question, many=True)
-#
-# self.assertEqual(response.status_code, 200)
-# self.assertEqual(response.data, serializer.data)
-
-# def test_jwt_auth():
-#     resp = self.client.post(url, {'username': 'user@foo.com', 'password': 'pass'}, format='json')
-#     self.assertEqual(resp.status_code, status.HTTP_200_OK)
-#     self.assertTrue('token' in resp.data)
-#     token = resp.data['token']
-#     # print(token)
-#
-
-#  work
-
-# @pytest.mark.django_db
-# def test_get_currencies(api_client, service_setup):
-#     response = api_client.get('/trading/currency/')
-#     currencies = Currency.objects.all()
-#     serializer = CurrencySerializer(currencies, many=True)
-#     response_content = json.loads(response.content.decode('utf-8'))
-#     assert serializer.data == response_content
-#     assert response.status_code == status.HTTP_200_OK
-
-
-# @pytest.mark.django_db
-# def test_get_currency(api_client, service_setup):
-#     currency1 = Currency.objects.get(id=1)
-#     response = api_client.get('/trading/currency/{0}/'.format(currency1.id))
-#     serializer = CurrencyDetailSerializer(currency1)
-#     response_content = json.loads(response.content.decode('utf-8'))
-#     assert serializer.data == response_content
-#     assert response.status_code == status.HTTP_200_OK
-#
-# @pytest.mark.django_db
-# def test_create_currency(api_client, service_setup):
-#     response = api_client.post('/trading/currency/', {"code": "USD","name": "Usd"}, format='json')
-#     currency1 = Currency.objects.all().last()
-#
-#     serializer = CurrencyDetailSerializer(currency1)
-#     response_content = json.loads(response.content.decode('utf-8'))
-#     print(response_content)
-#     assert serializer.data == response_content
-#     assert response.status_code == status.HTTP_201_CREATED
-#
-# @pytest.mark.django_db
-# def test_create_currency(api_client, service_setup):
-#     response = api_client.post('/trading/currency/', {"code": "USD","name": "Usd"}, format='json')
-#     currency1 = Currency.objects.all().last()
-#
-#     serializer = CurrencyDetailSerializer(currency1)
-#     response_content = json.loads(response.content.decode('utf-8'))
-#     print(response_content)
-#     assert serializer.data == response_content
-#     assert response.status_code == status.HTTP_201_CREATED
-
-# @pytest.mark.django_db
-# def test_create_offer_valid(api_client, service_setup):
-#     response = api_client.post('/trading/currency/', {"code": "USD","name": "Usd"}, format='json')
-#     currency1 = Currency.objects.all().last()
-#
-#     serializer = CurrencyDetailSerializer(currency1)
-#     response_content = json.loads(response.content.decode('utf-8'))
-#     print(response_content)
-#     assert serializer.data == response_content
-#     assert response.status_code == status.HTTP_201_CREATED
-#
-
-
-# @pytest.mark.django_db
-# def test_create_offer_valid(api_client1, service_setup):
-#     ''' invalid, when sell and inventory_seller.quantity <= data.get('quantity')'''
-#     profile = UserProfile.objects.get(id=1)
-#     assert profile.score == 0
-#
-#     profile.score = 1000
-#     profile.save(update_fields=["score"])
-#
-#     assert profile.score == 1000
-#     data = {
-#         "type_transaction": "BUY",
-#         "item": 1,
-#         "price": 5,
-#         "quantity": 10
-#     }
-#     response = api_client1.post('/trading/user-offers/', data, format='json')
-#
-#     assert response.status_code == status.HTTP_201_CREATED
-#
-#
-# @pytest.mark.django_db
-# def test_create_offer_invalid(api_client2, service_setup):
-#     ''' invalid, when inventory seller sell '''
-#     inv = Inventory.objects.all()
-#     assert len(inv) == 0
-#
-#     data = {
-#         "type_transaction": "SELL",
-#         "item": 1,
-#         "price": 10,
-#         "quantity": 10
-#     }
-#
-#     response = api_client2.post('/trading/user-offers/', data, format='json')
-#
-#     assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-
-
+# currency
+@pytest.mark.django_db
+def test_get_currencies(api_client1, service_setup):
+    response = api_client1['client'].get('/trading/currency/')
+    currencies = Currency.objects.all()
+    serializer = CurrencySerializer(currencies, many=True)
+    response_content = json.loads(response.content.decode('utf-8'))
+    assert serializer.data == response_content
+    assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.django_db
-def test_serializer_offer_invalid(user_setup, service_setup, api_client2):
-    ''' invalid, when buy and inventory_seller.quantity <= data.get('quantity')'''
+def test_get_currency(api_client1, service_setup):
+    response = api_client1['client'].get('/trading/currency/{0}/'.format(service_setup['currency1'].id))
+
+    currency1 = Currency.objects.get(id=service_setup['currency1'].id)
+    serializer = CurrencyDetailSerializer(currency1)
+
+    response_content = json.loads(response.content.decode('utf-8'))
+
+    assert serializer.data == response_content
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+def test_create_currency(api_client1, service_setup):
+    data = {"code": "USD", "name": "Usd"}
+    response = api_client1['client'].post('/trading/currency/', data, format='json')
+    currency1 = Currency.objects.all().last()
+    serializer = CurrencyDetailSerializer(currency1)
+    response_content = json.loads(response.content.decode('utf-8'))
+    assert serializer.data == response_content
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+# offer
+@pytest.mark.django_db
+def test_create_offer_valid(api_client1, offer_inventory_setup, service_setup):
+    ''' invalid, when sell and inventory_seller.quantity <= data.get('quantity')'''
+    profile = UserProfile.objects.get(user=api_client1['user'].id)
+    assert profile.score == 0
+
+    profile.score = 1000
+    profile.save(update_fields=["score"])
+
+    assert profile.score == 1000
+    data = {
+        "type_transaction": "BUY",
+        "item": service_setup['item'].id,
+        "price": 5,
+        "quantity": 10
+    }
+    response = api_client1["client"].post('/trading/user-offers/', data, format='json')
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.django_db
+def test_create_offer_invalid1(api_client2, service_setup):
+    ''' invalid, when inventory seller sell '''
     inv = Inventory.objects.all()
     assert len(inv) == 0
-
     data = {
-        "user":user_setup.id,
         "type_transaction": "SELL",
-        "item": 1,
+        "item": service_setup['item'].id,
         "price": 10,
         "quantity": 10
     }
+    response = api_client2['client'].post('/trading/user-offers/', data, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    response = api_client2.post('/trading/user-offers/', data, format='json')
 
-    # response = api_client.get('/trading/currency/')
-    # response = CurrencyView.as_view({'get': 'list'})(request)
-    print(response, response.data)
+@pytest.mark.django_db
+def test_create_offer_invalid2(api_client2, service_setup):
+    inv = Inventory.objects.all()
+    assert len(inv) == 0
+    data = {
+        "type_transaction": "SELL",
+        "item": service_setup['item'].id,
+        "price": 10,
+        "quantity": 10
+    }
+    response = api_client2['client'].post('/trading/user-offers/', data, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# inventory
+@pytest.mark.django_db
+def test_get_inventories(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/inventory/', format='json')
+    inventories = Inventory.objects.filter(user=api_client1['user'])
+    assert len(inventories) != 0
+
+    serializer = InventorySerializer(inventories, many=True)
+    response_content = json.loads(response.content.decode('utf-8'))
+    assert serializer.data == response_content
     assert response.status_code == status.HTTP_200_OK
 
-    # assert response.status_code == status.HTTP_400_BAD_REQUEST
-    # offer1 = Offer.objects.get(id=1)
-    # response_content = json.loads(response.content.decode('utf-8'))
-    # print(response_content)
-    # assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-# @pytest.mark.django_db
-# def test_create_offer_invalid(api_client, service_setup):
-#     ''' invalid, when buy and inventory_seller.quantity <= data.get('quantity')'''
-#     response = api_client.post('/trading/offer/', {
-#         "type_transaction": "SELL",
-#         "item": 1,
-#         "price": 10,
-#         "quantity": 10
-#
-#     }, format='json')
-#     # offer1 = Offer.objects.get(id=1)
-#     # response_content = json.loads(response.content.decode('utf-8'))
-#     # print(response_content)
-#     assert response.status_code == status.HTTP_400_BAD_REQUEST
+@pytest.mark.django_db
+def test_get_inventory(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/inventory/{0}/'.format(offer_inventory_setup['inventory1'].id))
+    inventory = Inventory.objects.get(id=offer_inventory_setup['inventory1'].id)
+    assert inventory != None
+    assert response.status_code == status.HTTP_200_OK
 
-# @pytest.mark.django_db
-# def test_valid_ser_offer(api_client, service_setup):
-#     ''' invalid, when buy and inventory_seller.quantity <= data.get('quantity')'''
-#     data = {
-#         "type_transaction": "BUY",
-#         "item": 1,
-#         "price": 10,
-#         "quantity": 10
-#     }
-#     profiles = UserProfile.objects.all()
-#     assert len(profiles) == 0
-#
-#
-#     with pytest.raises(ObjectDoesNotExist) as e:
-#         ser = OfferDetailSerializer(data=data)
-#         ser.is_valid(raise_exception=True)
-#
-# assert str(e.value) == 'No UserProfile seller matches the given query'
 
-# @pytest.mark.django_db
-# def test_name_of_your_test(api_fact):
-#     # Add your logic here
-#     # url = reverse('trading/currency')
-#
-#     # client.login(username=username, password=password)
-#     # response = client.get('/myapi/api/')
-#
-#     request = api_client.get('/trading/currency')
-#     response = CurrencyView.as_view({'get': 'list'})(request)
-#     print(response)
-#     assert response.status_code == status.HTTP_200_OK
+@pytest.mark.django_db
+def test_create_inventory(api_client1, service_setup, offer_inventory_setup):
+    assert len(Inventory.objects.all()) == 2
+    data = {
+        "item": service_setup['item'].id,
+        "quantity": 10
+    }
+    response = api_client1['client'].post('/trading/inventory/', data, format='json')
+    assert len(Inventory.objects.all()) == 3
+    assert response.status_code == status.HTTP_201_CREATED
 
-# def test_details(rf, admin):
-# request = rf.get('/customer/details')
-# # Remember that when using RequestFactory, the request does not pass
-# # through middleware. If your view expects fields such as request.user
-# # to be set, you need to set them explicitly.
-# # The following line sets request.user to an admin user.
-# request.user = admin
-# response = my_view(request)
-# assert response.status_code == 200
+
+# watch-list
+@pytest.mark.django_db
+def test_get_watchlist(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/watch-list/', format='json')
+    watchlist = WatchList.objects.filter(user=api_client1['user'])
+    assert len(watchlist) == 1
+
+    serializer = WatchListSerializer(watchlist, many=True)
+    response_content = json.loads(response.content.decode('utf-8'))
+    assert serializer.data == response_content
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+def test_get_watchlist(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/watch-list/{0}/'.format(offer_inventory_setup['watchlist'].id))
+    watchlist = WatchList.objects.get(id=offer_inventory_setup['watchlist'].id)
+    assert watchlist != None
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+def test_create_watchlist(api_client2, service_setup, offer_inventory_setup):
+    assert len(WatchList.objects.all()) == 1
+    data = {
+        "item": service_setup['item'].id,
+    }
+    response = api_client2['client'].post('/trading/watch-list/', data, format='json')
+    assert len(WatchList.objects.all()) == 2
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+# price
+@pytest.mark.django_db
+def test_get_prices(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/price/', format='json')
+    prices = Price.objects.all()
+    assert len(prices) == 1
+
+    serializer = PriceSerializer(prices, many=True)
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+def test_get_price(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/price/{0}/'.format(service_setup['price'].id))
+    price = Price.objects.get(id=service_setup['price'].id)
+
+    serializer = PriceDetailSerializer(price)
+    response_content = json.loads(response.content.decode('utf-8'))
+    assert response.status_code == status.HTTP_200_OK
+    assert serializer.data == response_content
+
+
+@pytest.mark.django_db
+def test_create_inventory(api_client1, service_setup, offer_inventory_setup):
+    assert len(Price.objects.all()) == 1
+    data = {
+        "item": service_setup['item'].id,
+        "price": 121,
+        "currency": service_setup['currency1'].id,
+        "data": datetime.datetime.now()
+    }
+    response = api_client1['client'].post('/trading/price/', data, format='json')
+    assert len(Price.objects.all()) == 2
+    assert response.status_code == status.HTTP_201_CREATED
+
+
+# item
+@pytest.mark.django_db
+def test_get_items(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/item/', format='json')
+    items = Item.objects.all()
+    assert len(items) == 1
+
+    serializer = ItemSerializer(items, many=True)
+    response_content = json.loads(response.content.decode('utf-8'))
+    print(response_content)
+    assert serializer.data == response_content
+    assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+def test_get_item(api_client1, service_setup, offer_inventory_setup):
+    response = api_client1['client'].get('/trading/item/{0}/'.format(service_setup['item'].id))
+    price = Item.objects.get(id=service_setup['item'].id)
+
+    serializer = ItemDetailSerializer(price)
+    response_content = json.loads(response.content.decode('utf-8'))
+    print(response_content)
+    assert response.status_code == status.HTTP_200_OK
+    assert serializer.data == response_content
+
+
+@pytest.mark.django_db
+def test_create_inventory(api_client1, service_setup, offer_inventory_setup):
+    assert len(Item.objects.all()) == 1
+    data = {
+        "code": 'NEWW',
+        "name": 'NEWW',
+        "currency": service_setup['currency1'].id
+    }
+    response = api_client1['client'].post('/trading/item/', data, format='json')
+    assert len(Item.objects.all()) == 2
+    assert response.status_code == status.HTTP_201_CREATED
