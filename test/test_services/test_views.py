@@ -57,9 +57,9 @@ def test_name_of_your_test(api_client):
     # client.login(username=username, password=password)
     # response = client.get('/myapi/api/')
 
-    request = api_client.get('/trading/currency')
-    response = CurrencyView.as_view({'get': 'list'})(request)
-    print(response)
+    response = api_client.get('/trading/currency/')
+    # response = CurrencyView.as_view({'get': 'list'})(request)
+    print(response, response.data)
     assert response.status_code == status.HTTP_200_OK
 
 # @pytest.mark.django_db

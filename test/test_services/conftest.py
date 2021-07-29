@@ -76,13 +76,7 @@ def api_client():
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     return client
 
-@pytest.fixture
-def api_client():
-    user = User.objects.create_user(username='john', email='js@js.com', password='123')
-    client = APIClient()
-    refresh = RefreshToken.for_user(user)
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    return client
+
 # @pytest.fixture
 # def signals_setup():
 #     user1 = mixer.blend(User)
