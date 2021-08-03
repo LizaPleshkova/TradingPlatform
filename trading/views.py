@@ -1,11 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from requests import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
-
+from django.core.exceptions import ObjectDoesNotExist
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
@@ -36,12 +35,11 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
             request.data['user'] = request.user.id
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-        except serializers.ValidationError as e:
-            return Response(e.detail['non_field_errors'], status=status.HTTP_400_BAD_REQUEST)
-        else:
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.validated_data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ObjectDoesNotExist as e:
+            return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -123,5 +121,5 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
         try:
             ProfitableTransactionsServices.requirements_for_transaction()
             return Response(status=status.HTTP_200_OK)
-        except BaseException as e:
+        except ObjectDoesNotExist as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)

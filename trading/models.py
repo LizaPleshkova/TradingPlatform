@@ -1,7 +1,7 @@
-from enum import Enum
-
 from django.db import models
 from django.contrib.auth.models import User
+
+from trading.enums import OfferCnoice
 
 
 class UserProfile(models.Model):
@@ -66,18 +66,8 @@ class WatchList(models.Model):
         unique_together = ('user', 'item')
 
 
-class OfferCnoice(Enum):
-    BUY = 'BUY'
-    SELL = 'SELL'
-
-    @classmethod
-    def choices(cls):
-        return [(key.value, key.name) for key in cls]
-
-
 class Offer(models.Model):
-    ''' request for buy\sell a specific stock '''
-
+    ''' request for buy/sell a specific stock '''
     type_transaction = models.CharField("Type of transaction", max_length=5, choices=OfferCnoice.choices(), null=True)
     item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.SET_NULL, related_name='item_offer')
     user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name='user_offer')
