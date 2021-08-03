@@ -4,7 +4,6 @@ from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inven
 
 class CurrencyAdmin(admin.ModelAdmin):
     list_display = ('id', 'code', 'name',)
-    list_display = ('code', 'name')
     list_filter = ['code']
     search_fields = ['name']
 

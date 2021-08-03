@@ -1,6 +1,7 @@
 from rest_framework import routers
-from .views import OfferListUserView, ItemView, WatchListView, InventoryView, \
-    PriceView, CurrencyView, TradeView, ProfitableTransactions
+from .views import (
+    OfferListUserView, ItemView, WatchListView, InventoryView, PriceView, CurrencyView, ProfitableTransactions
+)
 
 router = routers.SimpleRouter()
 
@@ -10,7 +11,6 @@ router.register(r'watch-list', WatchListView, basename='watch-list')
 router.register(r'inventory', InventoryView, basename='inventory')
 router.register(r'price', PriceView, basename='price')
 router.register(r'currency', CurrencyView, basename='currency')
-# router.register(r'trade', TradeView, basename='trade')
 
 # profitable transaction
 router.register(r'profitable-transactions', ProfitableTransactions, basename='profitable-transactions')

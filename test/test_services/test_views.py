@@ -3,10 +3,11 @@ import json
 from django.contrib.auth import get_user_model
 import pytest
 from rest_framework import status
-from trading.serializers import ItemSerializer, WatchListSerializer, \
-    CurrencySerializer, PriceSerializer, CurrencyDetailSerializer, OfferDetailSerializer, \
+from trading.serializers import (
+    ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer, CurrencyDetailSerializer,
     InventorySerializer, PriceDetailSerializer, ItemDetailSerializer
-from trading.models import Currency, Item, Price, WatchList, Inventory, UserProfile, OfferCnoice
+)
+from trading.models import Currency, Item, Price, WatchList, Inventory, UserProfile
 
 User = get_user_model()
 

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 import pytest
 from rest_framework.test import APIClient, APIRequestFactory
 from rest_framework_simplejwt.tokens import RefreshToken
-from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, OfferCnoice
+from trading.models import Currency, Item, Price, WatchList, Offer, Inventory, OfferCnoice
 
 User = get_user_model()
 

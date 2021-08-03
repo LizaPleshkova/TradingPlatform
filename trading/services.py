@@ -3,21 +3,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Offer, Trade, Inventory, UserProfile, OfferCnoice
 
 
-class BaseService:
-
-    def get_validate_data(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return serializer, serializer.validated_data
-
-
-class OfferService(BaseService):
-
-    def get_validate_data(self, request):
-        request.data['user'] = request.user.id
-        return super(OfferService, self).get_validate_data(request)
-
-
 def _updating_offer_quantity(offer1, offer2):
     ''' offer1 > offer2 '''
     offer1.quantity = offer1.quantity - offer2.quantity
@@ -35,8 +20,10 @@ class ProfitableTransactionsServices:
 
     @staticmethod
     def requirements_for_transaction():
-        buyer_offers = Offer.objects.filter(type_transaction=OfferCnoice.BUY.name)  # все офферы для покупки
-        seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name)  # все офферы для продажи
+        buyer_offers = Offer.objects.filter(type_transaction=OfferCnoice.BUY.name,
+                                            is_active=True)  # все офферы для покупки
+        seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.name,
+                                             is_active=True)  # все офферы для продажи
 
         for buyer_offer in buyer_offers:
             for seller_offer in seller_offers:
@@ -44,7 +31,7 @@ class ProfitableTransactionsServices:
 
     @staticmethod
     def checking_offers(buyer_offer, seller_offer):
-        if buyer_offer.item == seller_offer.item and seller_offer.is_active == True and buyer_offer.is_active == True:  # зафвки на одну и ту же items
+        if buyer_offer.item == seller_offer.item:  # зафвки на одну и ту же items
 
             if buyer_offer.price <= seller_offer.price:
                 ProfitableTransactionsServices.checking_offers_quantity(buyer_offer, seller_offer)
@@ -120,6 +107,7 @@ class TradeService:
     @staticmethod
     def updating_users_score(seller_offer: Offer, buyer_offer: Offer):
         try:
+            # ddeletet,hfnm
             seller_profile = UserProfile.objects.get(user_id=seller_offer.user.id)
             buyer_profile = UserProfile.objects.get(user_id=buyer_offer.user.id)
 
