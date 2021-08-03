@@ -2,8 +2,9 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 import pytest
 from trading.models import Trade, Inventory, UserProfile
-from trading.services import TradeService, ProfitableTransactionsServices, _updating_offer_quantity, \
-    _updating_offer_is_active
+from trading.services import (
+    TradeService, ProfitableTransactionsServices, _updating_offer_quantity, _updating_offer_is_active
+)
 
 User = get_user_model()
 

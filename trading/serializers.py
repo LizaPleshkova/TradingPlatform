@@ -60,14 +60,14 @@ class OfferDetailSerializer(serializers.ModelSerializer):
             if data.get('type_transaction') == OfferCnoice.SELL.name:
                 inventory_seller = Inventory.objects.get(user=data.get('user'),
                                                          item=data.get('item'))
-                print('inventory_seller', inventory_seller)
                 if inventory_seller.quantity <= data.get('quantity'):
                     raise serializers.ValidationError('You want to sell more stocks than you have', code='invalid')
             if data.get('type_transaction') == OfferCnoice.BUY.name:
                 buyer_profile = UserProfile.objects.get(user=data.get('user'))
                 if buyer_profile.score <= (data.get('quantity') * data.get('price')):
                     raise serializers.ValidationError(
-                        ("There aren't enough cash in the account to buy such a quantity of dtocks"), code='invalid')
+                        ("There aren't enough cash in the account to buy such a quantity of dtocks"), code='invalid'
+                    )
             return data
         except Inventory.DoesNotExist:
             raise ObjectDoesNotExist('No Inventory seller matches the given query')

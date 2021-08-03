@@ -1,9 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 import pytest
-from rest_framework import status, serializers
+from rest_framework import serializers
 from trading.serializers import OfferDetailSerializer
-from trading.models import Inventory, UserProfile, OfferCnoice
+from trading.models import Inventory, UserProfile
 
 User = get_user_model()
 
