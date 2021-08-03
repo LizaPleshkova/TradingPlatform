@@ -59,6 +59,7 @@ class ProfitableTransactionsServices:
             TradeService.updating_inventory_seller(seller_offer, buyer_offer)
             TradeService.updating_price_item(buyer_offer)
 
+
             trade = Trade.objects.create(
                 seller=seller_offer.user,
                 buyer=buyer_offer.user,
