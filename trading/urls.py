@@ -1,6 +1,11 @@
+from os import path
+
 from rest_framework import routers
+
+from . import views
 from .views import (
-    OfferListUserView, ItemView, WatchListView, InventoryView, PriceView, CurrencyView, ProfitableTransactions
+    OfferListUserView, ItemView, WatchListView, InventoryView, PriceView, CurrencyView, ProfitableTransactions,
+
 )
 
 router = routers.SimpleRouter()
@@ -16,3 +21,4 @@ router.register(r'currency', CurrencyView, basename='currency')
 router.register(r'profitable-transactions', ProfitableTransactions, basename='profitable-transactions')
 
 urlpatterns = router.urls
+
