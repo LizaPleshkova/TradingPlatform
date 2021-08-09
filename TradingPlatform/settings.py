@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'trading',
 
     'celery',
-    # 'django_celery_results',
 ]
 
 SHELL_PLUS_PRINT_SQL = True

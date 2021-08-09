@@ -12,6 +12,20 @@ from importlib import reload
 python manage.py shell_plus --print-sql
 pip install django-extensions
 
+from TradingPlatform
+import trading
+from trading import *
+from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
+from trading.enums import OfferCnoice
+from django.db.models import Count, F, Q, Value
+from datetime import datetime
+
+import for_sql
+from importlib import reload
+
+python manage.py shell_plus --print-sql
+pip install django-extensions
+
 off1 = Offer.objects.all()
 items = Item.objects.all()
 t1 = items.filter(currency=F('item_price__currency'))+
@@ -100,3 +114,4 @@ from trading_offer
 full outer join trading_item on trading_item.id = trading_offer.item_id
 full outer join trading_price on trading_price.item_id = trading_item.id
 where trading_price.price < trading_offer.price;
+

@@ -3,7 +3,7 @@ from django.db import connection, reset_queries
 import time
 import functools
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, OfferCnoice, UserProfile
-from django.db.models import Count, F, Q, Subquery, Exists, OuterRef, Case, When, Value
+from django.db.models import Count, F, Q, Subquery, Exists, OuterRef, Case, When, Value, Sum, Max
 import psycopg2
 
 
@@ -33,6 +33,41 @@ def connection_to_db():
     conn.close()
 
 
+def task1():
+    '''
+    посчитать price всех офферов для определнног user
+
+    users:
+        3 user1
+        1 admin
+
+    хочу уточнить первое задание
+    нужно посчитать price для всех офферов для определеьнного пользователя (это на какую сумму всего офферов?)
+    тип sum(price*quantity)
+    т.е. сумма оффера считается так (price*quantity)?
+    '''
+
+    offers = Offer.objects.values('user').annotate(sum_offers=Sum(F('price') * F('quantity')))
+    offers = Offer.objects.annotate(sum_offers=Sum(F('price') * F('quantity')))
+
+    offers = Offer.objects.filter(user=1).aggregate(sum_offers=Sum(F('price') * F('quantity')))
+
+
+def task1():
+    '''
+    посчитать самый популярный item (большего всего офферов)
+
+    users:
+        3 user1
+        1 admin
+    '''
+    item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
+
+    item = Item.objects.annotate(count_offers=Count('item_offer'))
+    item.filter(count_offers=3)
+    item.aggregate(count_offers=Max('count_offers'))
+
+
 @query_debugger
 def ex1():
     ''' 0.000869 '''
@@ -45,6 +80,36 @@ def ex2():
     '''   0.000279 '''
     off2 = Offer.objects.filter(type_transaction=OfferCnoice.BUY.value, is_active=True)
     print(off2)
+
+
+def ex333():
+    '''
+    что быстрее = Count(F('item_offer'))
+    '''
+    item = Item.objects.annotate(count_offers=Count('item_offer'))
+    itemF = Item.objects.annotate(count_offers=Count(F('item_offer')))
+
+
+def ex3222():
+    '''
+    for this
+    This time we used the function annotate. To produce a GROUP BY we use a combination of values and annotate:
+
+    values('is_active'): what to group by
+    annotate(total=Count('id')): what to aggregate
+    акции определенной валюты ==
+    about group by?
+
+
+    Book.objects.group_by('title', 'author').annotate(
+            shop_count=Count('shop'), price_avg=Avg('price')).order_by(
+            'name', 'author').distinct()
+
+
+
+    '''
+    item = Item.objects.values('currency').annotate(count_offers=Count('id'))
+    it = Item.objects.filter(currency__id=1).annotate(curr=Count('id'))
 
 
 @query_debugger
@@ -89,20 +154,18 @@ def ex5():
     item = Item.objects.filter(item_offer__in=Subquery(offers.only('id')))  # 0.002002
     print(item)
 
+
 def ex10():
     '''
     офферы у которых цена на продажу меньше, чем цена акций
-
     select *
     from trading_offer
     inner join trading_item on trading_item.id = trading_offer.item_id
     inner join trading_price on trading_price.item_id = trading_item.id
     where trading_price.price < trading_offer.price;
-
     '''
 
-    offer = Offer.objects.filter(price__gt=F('item__item_price__price')) # +
-
+    offer = Offer.objects.filter(price__gt=F('item__item_price__price'))  # +
     offer.annotate(difference=F('item__item_price__price') - F('price'))
 
     # price = Price.objects.filter(item=OuterRef('id'))
@@ -110,7 +173,8 @@ def ex10():
     price = Price.objects.filter(item=OuterRef('id'))
     items = Item.objects.filter(item_offer=OuterRef('id'))
 
-    offer = Offer.objects.filter(item=Subquery(items.values('id')), item__item_price__price=Subquery(price.values('id')))
+    offer = Offer.objects.filter(item=Subquery(items.values('id')),
+                                 item__item_price__price=Subquery(price.values('id')))
     offer = Offer.objects.filter(item=Subquery(items.values('id')))
     offer = Offer.objects.filter(item=items.values('id'))
 
@@ -118,7 +182,6 @@ def ex10():
         type_transaction=OfferCnoice.SELL.value, is_active=True,
         price_gt=0
     )
-
 
 
 @query_debugger
@@ -159,7 +222,8 @@ def ex7():
         When(Q(type_transaction=OfferCnoice.BUY.value) & Q(is_active=True),
              then=Value('for buy'))))
     buy_offer.filter(type__isnull=False)
-    buy_offer = Offer.objects.annotate(type=Case(When(type_transaction=OfferCnoice.BUY.value, then=Value('for buy')))).filter(type__isnull=False)
+    buy_offer = Offer.objects.annotate(
+        type=Case(When(type_transaction=OfferCnoice.BUY.value, then=Value('for buy')))).filter(type__isnull=False)
     print(buy_offer)
 
 
@@ -177,17 +241,16 @@ def ex8():
     item = Item.objects.filter(item_offer__in=Exists(off))
 
     off = Offer.objects.values('user') \
-                        .filter(Q(type_transaction=OfferCnoice.SELL.value))\
-                        .annotate(count_off=Count('id')).values('id')
+        .filter(Q(type_transaction=OfferCnoice.SELL.value)) \
+        .annotate(count_off=Count('id')).values('id')
 
     #  faster
     off = Offer.objects.values('user') \
-                        .annotate(count_off=Count('id', filter=Q(type_transaction=OfferCnoice.SELL.value)))
+        .annotate(count_off=Count('id', filter=Q(type_transaction=OfferCnoice.SELL.value)))
 
     off = Offer.objects.values('user') \
         .filter(Q(type_transaction=OfferCnoice.SELL.value)) \
         .annotate(count_off=Count('id')).values('id')
 
     it = Item.objects.filter(
-        item_offer__id__in=Exists(off)
-    )
+        item_offer__id__in=Exists(off))
