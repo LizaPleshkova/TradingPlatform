@@ -22,6 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'django_extensions',
+
     'rest_framework',
     'rest_framework_simplejwt',
 
@@ -30,6 +32,8 @@ INSTALLED_APPS = [
     'celery',
     # 'django_celery_results',
 ]
+
+SHELL_PLUS_PRINT_SQL = True
 
 LOGGING = {
     'version': 1,
