@@ -61,6 +61,7 @@ def task1():
         3 user1
         1 admin
     '''
+
     item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
 
     item = Item.objects.annotate(count_offers=Count('item_offer'))
