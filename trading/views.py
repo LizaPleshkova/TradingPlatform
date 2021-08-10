@@ -2,7 +2,8 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+
 from requests import Response
 from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -17,7 +18,7 @@ from .serializers import (
 )
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 from .services import ProfitableTransactionsServices
-from django.core import serializers as core_serializers
+from django.core import serializers
 
 User = get_user_model()
 
@@ -60,17 +61,14 @@ class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.Ge
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, ItemSerializer)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def popular_item(self, request):
 
+    @action(methods=['get'], detail=False)
+    def popular_item(self, request):
         item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
-        item = item.values_list()
         print(item)
-        core_serializers.serialize()
-        # return Response(json.dumps({"data": dict(item)}), content_type='application/json')
-        # return Response(serializer.data, status.HTTP_200_OK)
-        return JsonResponse(item, safe=False)
-        # return Response(item_json, content_type='application/json', status=status.HTTP_200_OK)
+        m = serializers.serialize('json', item)
+        # return JsonResponse({'data': list(item)})
+        return HttpResponse(m, content_type="text/json-comment-filtered")
 
 
 class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):

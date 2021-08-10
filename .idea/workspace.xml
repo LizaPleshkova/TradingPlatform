@@ -2,10 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0fddb255-d06e-4009-a163-a5f8b83335aa" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TradingPlatform/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradingPlatform/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trading/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradingPlatform/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradingPlatform/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/for_sql.py" beforeDir="false" afterPath="$PROJECT_DIR$/for_sql.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/queryset_trying.txt" beforeDir="false" afterPath="$PROJECT_DIR$/queryset_trying.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trading/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -13,8 +15,23 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="1wFlOnf7pMEGYoDs1LUCadAZz5z" />
   <component name="ProjectViewState">
@@ -52,5 +69,6 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>
