@@ -1,16 +1,52 @@
-from TradingPlatform
 import trading
 from trading import *
+
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 from trading.enums import OfferCnoice
+
 from django.db.models import Count, F, Q, Value
 from datetime import datetime
-
+from work_shift.models import WorkShift, Position, Plan
+from work_shift.serializers import WSSerializer
 import for_sql
 from importlib import reload
 
 python manage.py shell_plus --print-sql
 pip install django-extensions
+
+
+
+# for new app
+plans = Plan.objects.all()
+ws = WorkShift.objects.all()
+pos = Position.objects.all()
+
+
+ws = WorkShift.objects.filter(plan__id=1)
+ws = WorkShift.objects.filter(plan__id=1)
+pos = Position.objects.filter(workshifts__id=2).values('id') # 1 2
+pos = Position.objects.filter(workshifts__id=2).only('id') # 1 2
+
+for i in pos:
+    for j in i:
+        print(i)
+        print(j)
+
+
+#1 - work!
+ws1 = WorkShift.objects.get(id=1)
+serWs= WSSerializer(ws1, many=True)
+serWs.data
+
+#2
+pos = Position.objects.filter(workshifts__id=OuterRef('id').only('id')
+ws = WorkShift.objects.filter(plan__id=3)
+ws1 = WorkShift.objects.filter(plan__id=3).order_by('id')
+
+# with ArrayAgg
+ws1 = WorkShift.objects.filter(plan__id=3).order_by('id')
+ws1.annotate(assigned_pos=ArrayAgg('assigned_positions'))+
+
 
 off1 = Offer.objects.all()
 items = Item.objects.all()

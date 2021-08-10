@@ -101,23 +101,3 @@ class Inventory(models.Model):
 
     def __str__(self):
         return f'{self.id} - {self.user.username} - {self.item} - {self.quantity}'
-
-# class Plan(models.Model):
-#     name = models.CharField("Plan", max_length=255, null=True, blank=True)
-#     start = models.DateField()
-#     end = models.DateField()
-#
-#
-# class WorkShift(models.Model):
-#     name = models.CharField("Work shift", max_length=255, null=True, blank=True)
-#     start_date = models.DateTimeField()
-#     end_date = models.DateTimeField()
-#     plan = models.ForeignKey(Plan, blank=True, null=True, on_delete=models.SET_NULL, related_name='workshift_plan')
-#
-#
-# class Position(models.Model):
-#     first_name = models.CharField("First name", max_length=255, null=True, blank=True)
-#     last_name = models.CharField("Last name", max_length=255, null=True, blank=True)
-#     email = models.CharField("Email", max_length=255, null=True, blank=True)
-#     workshifts = models.ManyToManyField(WorkShift, blank=True, null=True, on_delete=models.SET_NULL,
-#                                         related_name='workshifts')
