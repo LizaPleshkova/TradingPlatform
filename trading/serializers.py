@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
@@ -35,6 +37,38 @@ class ItemDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = '__all__'
+
+
+class PopularItemSerializer(serializers.ModelSerializer):
+    # count_offers = serializers.SerializerMethodField('get_count_offers')
+    count_offers = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Item
+        fields = ('code', 'name', 'count_offers')
+
+    # def get_count_offers(self, obj):
+    #     quantity = Item.objects.get(id=obj).quantity
+    #     return quantity
+    #
+    #
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     data = super(PopularItemSerializer, self).to_representation(instance)
+    #     print('representation', representation)
+    #     print('type(representation', type(representation))
+    #     print('dict(representation)', dict(representation))
+    #
+    #     # rep = super(ItemDetailSerializer, self).to_representation(obj)
+    #     # duration = rep.pop('duration', '')
+    #     # return {
+    #     #
+    #     #     'duration of cycle': duration,
+    #     # }
+    #     # representation = super().to_representation(obj)
+    #     # item_representation = representation.pop('fields')
+    #     return data
+    #     # return representation
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -90,6 +124,14 @@ class InventoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         fields = '__all__'
+
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+
+        item_representation = representation.pop('item')
+        for key in item_representation:
+            representation[f'item {key}'] = item_representation[key]
+        return representation
 
 
 class PriceDetailSerializer(serializers.ModelSerializer):

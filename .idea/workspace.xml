@@ -3,11 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="0fddb255-d06e-4009-a163-a5f8b83335aa" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradingPlatform/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradingPlatform/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TradingPlatform/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradingPlatform/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/for_sql.py" beforeDir="false" afterPath="$PROJECT_DIR$/for_sql.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/queryset_trying.txt" beforeDir="false" afterPath="$PROJECT_DIR$/queryset_trying.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trading/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trading/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/serializers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
