@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count
+from django.db.models import Count, Sum, F
 from django.http import JsonResponse, HttpResponse
 
 from requests import Response
@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
-    PriceDetailSerializer, CurrencyDetailSerializer
+    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer
 )
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 from .services import ProfitableTransactionsServices
@@ -48,6 +48,14 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
         except ObjectDoesNotExist as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)
 
+    # @action(methods=['get'], detail=False, url_path='trading/user-offers/price_offers/')
+    @action(methods=['get'], detail=False)
+    def all_price_offers_for_user(self, request):
+        offers = Offer.objects.filter(user=request.user).aggregate(sum_offers=Sum(F('price') * F('quantity')))
+        print(offers)
+        m = serializers.serialize('json', offers)
+        return HttpResponse(m, content_type="text/json-comment-filtered")
+
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
@@ -65,11 +73,12 @@ class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.Ge
     @action(methods=['get'], detail=False)
     def popular_item(self, request):
         item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
-        print(item)
-        m = serializers.serialize('json', item)
-        # return JsonResponse({'data': list(item)})
-        return HttpResponse(m, content_type="text/json-comment-filtered")
-
+        # m = serializers.serialize('json', item)
+        m = PopularItemSerializer(item)
+        print(m, type(m))
+        print(m.data)
+        # print(m.validated_data)
+        return HttpResponse(m.data, content_type="text/json-comment-filtered")
 
 class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
