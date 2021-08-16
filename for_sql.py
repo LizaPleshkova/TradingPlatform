@@ -68,7 +68,7 @@ def init_ws():
             plan=plan3
         )
 
-
+offers = Offer.objects.filter(user=1).aggregate(sum_offers=Sum(F('price') * F('quantity')))
 def task1():
     '''
     посчитать price всех офферов для определнног user

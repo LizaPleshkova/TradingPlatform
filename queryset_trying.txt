@@ -4,7 +4,7 @@ from trading import *
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
 from trading.enums import OfferCnoice
 
-from django.db.models import Count, F, Q, Value
+from django.db.models import Count, F, Q, Value, Sum
 from datetime import datetime
 from work_shift.models import WorkShift, Position, Plan
 from work_shift.serializers import WSSerializer

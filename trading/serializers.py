@@ -39,36 +39,40 @@ class ItemDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BookSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        return {'id': instance.pk, 'num_authors': instance.authors__count}
+
+
+class OfferPriceUserSerializer(serializers.ModelSerializer):
+    sum_offers = serializers.IntegerField()
+
+    class Meta:
+        model = Offer
+        fields = ('type_transaction', 'item', 'user', 'sum_offers')
+
+
 class PopularItemSerializer(serializers.ModelSerializer):
-    # count_offers = serializers.SerializerMethodField('get_count_offers')
     count_offers = serializers.IntegerField(required=False)
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        print(representation, type(representation))
+        # representation['count_offers'] = instance.count_offers
+
+        return json.dumps(representation)
+        # return json.loads(json.dumps({
+        #     'code': instance.code,
+        #     'count_offers': instance.count_offers
+        # })
+        # )
 
     class Meta:
         model = Item
-        fields = ('code', 'name', 'count_offers')
-
-    # def get_count_offers(self, obj):
-    #     quantity = Item.objects.get(id=obj).quantity
-    #     return quantity
-    #
-    #
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     data = super(PopularItemSerializer, self).to_representation(instance)
-    #     print('representation', representation)
-    #     print('type(representation', type(representation))
-    #     print('dict(representation)', dict(representation))
-    #
-    #     # rep = super(ItemDetailSerializer, self).to_representation(obj)
-    #     # duration = rep.pop('duration', '')
-    #     # return {
-    #     #
-    #     #     'duration of cycle': duration,
-    #     # }
-    #     # representation = super().to_representation(obj)
-    #     # item_representation = representation.pop('fields')
-    #     return data
-    #     # return representation
+        # fields = ('code', 'count_offers')
+        # fields = ('item',)
+        fields = '__all__'
+        depth = 1
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -116,6 +120,18 @@ class InventorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         exclude = ('quantity',)
+
+    def to_internal_value(self, data):
+        try:
+            item_data = data['user']
+            for i in item_data:
+                user = User.objects.get(username=item_data[i])
+            data['user'] = user.id
+            return super().to_internal_value(data)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                'User does not exist.'
+            )
 
 
 class InventoryDetailSerializer(serializers.ModelSerializer):
