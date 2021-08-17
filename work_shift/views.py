@@ -13,10 +13,10 @@ from work_shift.models import WorkShift, Position, Plan
 @api_view(['GET'])
 def shifts_func(request, id, format=None):
     if request.method == 'GET':
-        # ws1 = WorkShift.objects.filter(plan__id=id).order_by('id')
+        ws1 = WorkShift.objects.filter(plan__id=id).order_by('id')
 
-        ws1 = WorkShift.objects.filter(plan__id=id).order_by('id') \
-            .annotate(assigned_pos=ArrayAgg('assigned_positions'))
+        # ws1 = WorkShift.objects.filter(plan__id=id).order_by('id') \
+        #     .annotate(assigned_pos=ArrayAgg('assigned_positions'))
 
         serWs = WSSerializer(ws1, many=True)
         return Response(serWs.data, status.HTTP_200_OK)

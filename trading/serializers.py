@@ -1,9 +1,7 @@
 import json
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
-
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, OfferCnoice, UserProfile
 
 User = get_user_model()
@@ -57,20 +55,14 @@ class PopularItemSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        print(representation, type(representation))
-        # representation['count_offers'] = instance.count_offers
-
+        currency = representation['currency']
+        for curr in currency:
+            if curr == 'code':
+                representation['currency'] = currency[curr]
         return json.dumps(representation)
-        # return json.loads(json.dumps({
-        #     'code': instance.code,
-        #     'count_offers': instance.count_offers
-        # })
-        # )
 
     class Meta:
         model = Item
-        # fields = ('code', 'count_offers')
-        # fields = ('item',)
         fields = '__all__'
         depth = 1
 

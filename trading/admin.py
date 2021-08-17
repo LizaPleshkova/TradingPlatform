@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.admin import forms
+
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
 
 

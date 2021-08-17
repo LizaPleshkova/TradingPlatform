@@ -23,14 +23,13 @@ User = get_user_model()
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self, *args, **kwargs):
-        return Offer.objects.all()
-
     serializer_classes_by_action = {
         'retrieve': OfferDetailSerializer,
         'create': OfferDetailSerializer,
     }
+
+    def get_queryset(self, *args, **kwargs):
+        return Offer.objects.all()
 
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, OfferListSerializer)
@@ -56,11 +55,9 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
     @action(methods=['get'], detail=False, url_path='price_offers_users')
     def price_offers_users(self, request):
         offers = Offer.objects.values('user').annotate(sum_offers=Sum(F('price') * F('quantity')))
-        print(offers)
         for off in offers:
             off['sum_offers'] = float(off['sum_offers'])
-            json_offer = json.dumps(off)
-        return HttpResponse(json_offer, content_type="text/json-comment-filtered")
+        return HttpResponse(json.dumps(list(offers)), content_type="application/json")
 
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -74,10 +71,6 @@ class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.Ge
 
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, ItemSerializer)
-
-    def retrieve(self, request, *args, **kwargs):
-        retr = super().retrieve(request)
-        return retr
 
     @action(methods=['get'], detail=False)
     def popular_item(self, request):
