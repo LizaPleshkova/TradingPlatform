@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import forms
 
-from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
+from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, Ip
 
 
 class CurrencyAdmin(admin.ModelAdmin):
@@ -23,7 +23,8 @@ class PriceAdmin(admin.ModelAdmin):
 
 
 class OfferAdmin(admin.ModelAdmin):
-    list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active',)
+    # list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active', 'counts_views')
+    list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active', )
     list_filter = ['type_transaction', 'item', 'user', 'is_active']
 
 
@@ -51,6 +52,12 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ['user']
 
 
+class IpAdmin(admin.ModelAdmin):
+    list_display = ('id', 'ip',)
+    # list_filter = ['ip']
+    search_fields = ['ip']
+
+
 admin.site.register(Currency, CurrencyAdmin)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Price, PriceAdmin)
@@ -59,3 +66,4 @@ admin.site.register(Trade, TradeAdmin)
 admin.site.register(Inventory, InventoryAdmin)
 admin.site.register(WatchList, WatchListAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(Ip, IpAdmin)

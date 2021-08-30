@@ -37,11 +37,6 @@ class ItemDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BookSerializer(serializers.ModelSerializer):
-    def to_representation(self, instance):
-        return {'id': instance.pk, 'num_authors': instance.authors__count}
-
-
 class OfferPriceUserSerializer(serializers.ModelSerializer):
     sum_offers = serializers.IntegerField()
 
@@ -76,7 +71,39 @@ class ItemSerializer(serializers.ModelSerializer):
 class OfferListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
-        exclude = ('price', 'quantity', 'is_active')
+        exclude = ('price', 'quantity', 'is_active', 'counts_views')
+
+
+class PopularOfferSerializer(serializers.ModelSerializer):
+    count_offers = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Offer
+        fields = '__all__'
+
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     currency = representation['currency']
+    #     for curr in currency:
+    #         if curr == 'code':
+    #             representation['currency'] = currency[curr]
+    #     return json.dumps(representation)
+
+class OfferRetrieveSerializer(serializers.ModelSerializer):
+    # counts_views = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = Offer
+        fields = '__all__'
+
+    def to_representation(self, data):
+        representation = super().to_representation(data)
+
+        id = representation['id']
+        print('id', id)
+        ob1 = Offer.objects.get(id=id)
+        representation['counts_views'] = ob1.counts_views.count()
+        return representation
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):

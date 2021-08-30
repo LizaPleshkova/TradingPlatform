@@ -4,6 +4,12 @@ from django.shortcuts import get_object_or_404
 from .models import Offer, Trade, Inventory, UserProfile, OfferCnoice, Price
 
 
+class BaseStatistics():
+    def get_popular_obj(self, field):
+        return self.get_queryset().filter()
+
+
+
 def _updating_offer_quantity(offer1, offer2):
     ''' offer1 > offer2 '''
     offer1.quantity = offer1.quantity - offer2.quantity
@@ -136,3 +142,14 @@ class TradeService:
             price_item.save(update_fields=["price"])
         except Price.DoesNotExist:
             raise ObjectDoesNotExist('No Price matches the given query')
+
+
+# Метод для получения айпи
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')  # В REMOTE_ADDR значение айпи пользователя
+    return ip
+#

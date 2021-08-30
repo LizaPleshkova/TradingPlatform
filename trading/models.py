@@ -4,6 +4,10 @@ from django.contrib.auth.models import User
 from trading.enums import OfferCnoice
 
 
+class Ip(models.Model):
+    ip = models.GenericIPAddressField()
+
+
 class UserProfile(models.Model):
     ''' userprofile with user's score'''
     user = models.OneToOneField(
@@ -75,8 +79,11 @@ class Offer(models.Model):
     quantity = models.IntegerField("Requested quantity")
     is_active = models.BooleanField(default=True)
 
+    # counts_views = models.IntegerField(default=0)
+    counts_views = models.ManyToManyField(Ip, blank=True, related_name='offer_views')
+
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.counts_views}'
 
 
 class Trade(models.Model):

@@ -1,9 +1,11 @@
 import json
+import django_filters
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum, F
 from django.http import JsonResponse, HttpResponse
 from requests import Response
 from rest_framework.decorators import api_view, action
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
@@ -12,27 +14,55 @@ from django.core.exceptions import ObjectDoesNotExist
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
-    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer
+    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
+    PopularOfferSerializer
 )
-from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory
-from .services import ProfitableTransactionsServices
+from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip
+from .services import ProfitableTransactionsServices, get_client_ip
 from django.core import serializers
 
 User = get_user_model()
 
 
+class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+
+    @action(methods=['get'], detail=False, url_path='popular-offer')
+    def popular_offer(self, request):
+        offers = Offer.objects.annotate(co=Count('counts_views')).order_by('-co').first()
+        ser = PopularOfferSerializer(offers)
+        return HttpResponse(ser.data, content_type="application/json")
+
+
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_classes_by_action = {
-        'retrieve': OfferDetailSerializer,
+        'retrieve': OfferRetrieveSerializer,
         'create': OfferDetailSerializer,
     }
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['user', 'is_active']
 
     def get_queryset(self, *args, **kwargs):
         return Offer.objects.all()
 
     def get_serializer_class(self):
-        return self.serializer_classes_by_action.get(self.action, OfferListSerializer)
+        return self.serializer_classes_by_action.get(self.action, OfferRetrieveSerializer)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        ip = get_client_ip(request)
+        ip = '0.0.0.1'
+        serializer = self.get_serializer(instance)
+        if Ip.objects.filter(ip=ip).exists():
+            instance.counts_views.add(Ip.objects.get(ip=ip))
+        else:
+            Ip.objects.create(ip=ip)
+            instance.counts_views.add(Ip.objects.get(ip=ip))
+
+        # instance.counts_views += 1
+        # instance.save(update_fields=["counts_views"])
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         try:
@@ -59,10 +89,19 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
             off['sum_offers'] = float(off['sum_offers'])
         return HttpResponse(json.dumps(list(offers)), content_type="application/json")
 
+    @action(methods=['get'], detail=False, url_path='popular-offer')
+    def popular_offer(self, request):
+        offers = Offer.objects.values('id').annotate(co=Count('counts_views')).order_by('-co').first()
+        offers = Offer.objects.annotate(co=Count('counts_views')).order_by('-co').first()
+
+        return HttpResponse(json.dumps(list(offers)), content_type="application/json")
+
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Item.objects.all()
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['currency']
 
     serializer_classes_by_action = {
         'retrieve': ItemDetailSerializer,
@@ -83,6 +122,8 @@ class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.Ge
 class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = WatchListSerializer
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['user', 'item',]
 
     def get_queryset(self, *args, **kwargs):
         return WatchList.objects.filter(user=self.request.user)
@@ -93,6 +134,8 @@ class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 
 class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['user', 'item',]
     serializer_classes_by_action = {
         'retrieve': InventoryDetailSerializer,
         'create': InventorySerializer,
@@ -112,7 +155,6 @@ class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Currency.objects.all()
-
     serializer_classes_by_action = {
         'retrieve': CurrencyDetailSerializer,
         'create': CurrencyDetailSerializer,
@@ -125,6 +167,8 @@ class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewset
 class PriceView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Price.objects.all()
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_fields = ['user', 'item',]
 
     serializer_classes_by_action = {
         'retrieve': PriceDetailSerializer,

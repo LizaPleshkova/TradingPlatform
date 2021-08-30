@@ -2,13 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0fddb255-d06e-4009-a163-a5f8b83335aa" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TradingPlatform/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/TradingPlatform/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trading/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trading/signals.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/signals.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trading/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/trading/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trading/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/trading/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/work_shift/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/work_shift/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/work_shift/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/work_shift/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +23,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feature-for-db" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitSEFilterConfiguration">
@@ -70,5 +75,16 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/trading/admin.py</url>
+          <line>8</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
