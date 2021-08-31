@@ -17,62 +17,45 @@ from .serializers import (
 
 
 class StatisticService:
-    # @staticmethod
-    # def get_popular_objects():
-    #     popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits')[:1]
-    #     popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
-    #     popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by('-counts_currency')[:1]
-    #
-    #     # ser = PopularObjectSerializer(popular_offer, popular_item, popular_currency)
-    #     # ser_offer = PopularItemSerializer(data=popular_item)
-    #     # ser_offer.is_valid(raise_exception=True)
-    #
-    #     popular_objects = {
-    #         'popular_offer': popular_offer,
-    #         # 'popular_item': popular_item,
-    #         # 'popular_currency': popular_currency,
-    #     }
-    #     # ser = PopularObjectSerializer(data=popular_objects)
-    #     ser = PopularOfferSerializer(data=popular_offer)
-    #     ser.is_valid(raise_exception=True)
-    #     ser.validated_data
-    #     return ser.data
     @staticmethod
     def get_popular_objects():
         # popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits').first()
         popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers').first()
         popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by(
             '-counts_currency').first()
-        #
+
+        popular_objects = {
+            'popular_item': popular_item,
+            'popular_currency': popular_currency,
+        }
+
+        # work
+        # pidict = model_to_dict(popular_item)
+        # pidict['count_offers']= popular_item.count_offers
         # popular_objects = {
-        #     'popular_offer': model_to_dict(popular_offer),
-        #     'popular_item': model_to_dict(popular_item),
+        #     # 'popular_offer': model_to_dict(popular_offer),
+        #     'popular_item':pidict,
         #     'popular_currency': model_to_dict(popular_currency),
         # }
-        # popular_offer = Offer.objects.get(id=36)
-        pidict = model_to_dict(popular_item)
-        pidict['count_offers']= popular_item.count_offers
-        popular_objects = {
-            # 'popular_offer': model_to_dict(popular_offer),
-            'popular_item':pidict,
-            'popular_currency': model_to_dict(popular_currency),
-        }
-        # obj = {
-        #     'popular_offer': {
-        #         "id":...,
-        #         "type_transaction":...,
-        #     },
-        #     'popular_currency': {
-        #         "id": ...,
-        #         "code": ...,
-        #     }
-        # }
+
         ser_cur = PopularCurrencySerializer(popular_currency)
-        # ser = PopularObjectSerializer(data=popular_objects)
-        # ser.is_valid(raise_exception=True)
-        # ser.validated_data
-        return popular_objects
-        # return popular_objects
+        ser = PopularObjectSerializer(popular_objects)
+
+        return ser.data
+
+    @staticmethod
+    def get_best_items():
+        ''' get best-selling/best-buying items'''
+
+        return
+
+    @staticmethod
+    def smth():
+        ''' на сколько сегодня было совершено сделок'''
+
+    @staticmethod
+    def smth():
+        ''' какие акции купили продали сегодня'''
 
 
 def _updating_offer_quantity(offer1, offer2):
