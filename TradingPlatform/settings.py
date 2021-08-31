@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'work_shift',
 
     'celery',
+    # 'django_statistic',
 'django_filters',
 ]
 
@@ -41,7 +42,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ]
 }
-
+RELATIVE_FOR_YEAR = 1 # Get relative year (Today is 2013, example get: 2012, 2013)
+RELATIVE_FOR_MONTH = 3 # Get relative month (Today is 1'th January, example get: 2012.11, 2012.12, 2013.1)
+RELATIVE_FOR_WEEK = 2 # Get relative week (Today is 13'th week of year, example get: 11, 12, 13 week of year)
 #
 # LOGGING = {
 #     'version': 1,

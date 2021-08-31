@@ -11,6 +11,8 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from django.core.exceptions import ObjectDoesNotExist
+# from statistic.models import Statistic
+
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
@@ -26,6 +28,23 @@ User = get_user_model()
 
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
+    #
+    # def my_view(request):
+    #     book = Offer.objects.get(
+    #         id__in=Offer.objects.values('id').filter(is_active=True)
+    #     )
+    #
+    #     # Put object in statistic table
+    #     Statistic.objects.add(book)
+    #     print(Statistic.objects.add(book))
+    #     # Get statistic for object
+    #     statistic_for_object = Statistic.objects.get_statistic_for_object(book)
+    #     print(statistic_for_object)
+    #
+    #     # Get statistic for model
+    #     statistic_for_model = Statistic.objects.get_statistic_for_model(Offer, limit=50)
+    #     print(statistic_for_model)
+    #     return HttpResponse(statistic_for_object, content_type="text/json-comment-filtered")
 
     @action(methods=['get'], detail=False, url_path='popular-offer')
     def popular_offer(self, request):
