@@ -1,13 +1,78 @@
 from decimal import Decimal
+
+from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
+from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404
-from .models import Offer, Trade, Inventory, UserProfile, OfferCnoice, Price
+
+from .enums import OfferCnoice
+from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip, UserProfile
+from .serializers import (
+    OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
+    OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
+    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
+    PopularOfferSerializer, PopularObjectSerializer, PopularCurrencySerializer
+)
 
 
-class BaseStatistics():
-    def get_popular_obj(self, field):
-        return self.get_queryset().filter()
-
+class StatisticService:
+    # @staticmethod
+    # def get_popular_objects():
+    #     popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits')[:1]
+    #     popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
+    #     popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by('-counts_currency')[:1]
+    #
+    #     # ser = PopularObjectSerializer(popular_offer, popular_item, popular_currency)
+    #     # ser_offer = PopularItemSerializer(data=popular_item)
+    #     # ser_offer.is_valid(raise_exception=True)
+    #
+    #     popular_objects = {
+    #         'popular_offer': popular_offer,
+    #         # 'popular_item': popular_item,
+    #         # 'popular_currency': popular_currency,
+    #     }
+    #     # ser = PopularObjectSerializer(data=popular_objects)
+    #     ser = PopularOfferSerializer(data=popular_offer)
+    #     ser.is_valid(raise_exception=True)
+    #     ser.validated_data
+    #     return ser.data
+    @staticmethod
+    def get_popular_objects():
+        # popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits').first()
+        popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers').first()
+        popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by(
+            '-counts_currency').first()
+        #
+        # popular_objects = {
+        #     'popular_offer': model_to_dict(popular_offer),
+        #     'popular_item': model_to_dict(popular_item),
+        #     'popular_currency': model_to_dict(popular_currency),
+        # }
+        # popular_offer = Offer.objects.get(id=36)
+        pidict = model_to_dict(popular_item)
+        pidict['count_offers']= popular_item.count_offers
+        popular_objects = {
+            # 'popular_offer': model_to_dict(popular_offer),
+            'popular_item':pidict,
+            'popular_currency': model_to_dict(popular_currency),
+        }
+        # obj = {
+        #     'popular_offer': {
+        #         "id":...,
+        #         "type_transaction":...,
+        #     },
+        #     'popular_currency': {
+        #         "id": ...,
+        #         "code": ...,
+        #     }
+        # }
+        ser_cur = PopularCurrencySerializer(popular_currency)
+        # ser = PopularObjectSerializer(data=popular_objects)
+        # ser.is_valid(raise_exception=True)
+        # ser.validated_data
+        return popular_objects
+        # return popular_objects
 
 
 def _updating_offer_quantity(offer1, offer2):

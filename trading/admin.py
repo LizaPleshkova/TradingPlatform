@@ -11,8 +11,8 @@ class CurrencyAdmin(admin.ModelAdmin):
 
 
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ('id', 'code', 'name',)
-    list_filter = ['code']
+    list_display = ('id', 'code', 'name', 'currency')
+    list_filter = ['code', 'currency']
     search_fields = ['code', 'name']
 
 

@@ -18,7 +18,7 @@ from .serializers import (
     PopularOfferSerializer
 )
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip
-from .services import ProfitableTransactionsServices, get_client_ip
+from .services import ProfitableTransactionsServices, get_client_ip, StatisticService
 from django.core import serializers
 
 User = get_user_model()
@@ -27,11 +27,16 @@ User = get_user_model()
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
 
+    def list(self, request, *args, **kwargs):
+        ser_data = StatisticService.get_popular_objects()
+        return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
+
     @action(methods=['get'], detail=False, url_path='popular-offer')
     def popular_offer(self, request):
-        offers = Offer.objects.annotate(co=Count('counts_views')).order_by('-co').first()
-        ser = PopularOfferSerializer(offers)
-        return HttpResponse(ser.data, content_type="application/json")
+        popular_offer = Offer.objects.annotate(counts_views=Count('counts_views')).order_by('-counts_views').first()
+        ser = PopularOfferSerializer(popular_offer)
+
+        return Response(ser.data, content_type="application/json")
 
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -80,21 +85,21 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
         offers = Offer.objects.filter(user=request.user).aggregate(sum_offers=Sum(F('price') * F('quantity')))
         offers['sum_offers'] = float(offers['sum_offers'])
         json_offer = json.dumps(offers)
-        return HttpResponse(json_offer, content_type="text/json-comment-filtered")
+        return Response(json_offer, content_type="text/json-comment-filtered")
 
     @action(methods=['get'], detail=False, url_path='price_offers_users')
     def price_offers_users(self, request):
         offers = Offer.objects.values('user').annotate(sum_offers=Sum(F('price') * F('quantity')))
         for off in offers:
             off['sum_offers'] = float(off['sum_offers'])
-        return HttpResponse(json.dumps(list(offers)), content_type="application/json")
+        return Response(json.dumps(list(offers)), content_type="application/json")
 
     @action(methods=['get'], detail=False, url_path='popular-offer')
     def popular_offer(self, request):
         offers = Offer.objects.values('id').annotate(co=Count('counts_views')).order_by('-co').first()
         offers = Offer.objects.annotate(co=Count('counts_views')).order_by('-co').first()
 
-        return HttpResponse(json.dumps(list(offers)), content_type="application/json")
+        return Response(json.dumps(offers), content_type="application/json")
 
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -123,7 +128,7 @@ class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
     permission_classes = (IsAuthenticated,)
     serializer_class = WatchListSerializer
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    filterset_fields = ['user', 'item',]
+    filterset_fields = ['user', 'item', ]
 
     def get_queryset(self, *args, **kwargs):
         return WatchList.objects.filter(user=self.request.user)
@@ -135,7 +140,7 @@ class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    filterset_fields = ['user', 'item',]
+    filterset_fields = ['user', 'item', ]
     serializer_classes_by_action = {
         'retrieve': InventoryDetailSerializer,
         'create': InventorySerializer,
@@ -168,7 +173,7 @@ class PriceView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.G
     permission_classes = (IsAuthenticated,)
     queryset = Price.objects.all()
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    filterset_fields = ['user', 'item',]
+    filterset_fields = ['user', 'item', ]
 
     serializer_classes_by_action = {
         'retrieve': PriceDetailSerializer,
