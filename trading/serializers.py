@@ -22,7 +22,8 @@ class ItemSerializer(serializers.ModelSerializer):
 class CurrencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Currency
-        exclude = ('name',)
+        # exclude = ('name',)
+        fields = '__all__'
 
 
 class CurrencyDetailSerializer(serializers.ModelSerializer):
@@ -65,42 +66,27 @@ class PopularItemSerializer(serializers.ModelSerializer):
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ('code', 'name',)
+        # fields = ('code', 'name',)
+        fields = '__all__'
 
 
-class OfferListSerializer(serializers.ModelSerializer):
+class OfferListSerializer(serializers.Serializer):
     class Meta:
         model = Offer
         exclude = ('price', 'quantity', 'is_active', 'counts_views')
 
 
-class PopularOfferSerializer(serializers.ModelSerializer):
-    count_offers = serializers.IntegerField(required=False)
-
-    class Meta:
-        model = Offer
-        fields = '__all__'
-
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     currency = representation['currency']
-    #     for curr in currency:
-    #         if curr == 'code':
-    #             representation['currency'] = currency[curr]
-    #     return json.dumps(representation)
-
 class OfferRetrieveSerializer(serializers.ModelSerializer):
-    # counts_views = serializers.IntegerField(required=False)
 
     class Meta:
         model = Offer
-        fields = '__all__'
+        # fields = '__all__'
+        exclude = ('price',)
 
     def to_representation(self, data):
         representation = super().to_representation(data)
 
         id = representation['id']
-        print('id', id)
         ob1 = Offer.objects.get(id=id)
         representation['counts_views'] = ob1.counts_views.count()
         return representation
@@ -159,14 +145,14 @@ class InventoryDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         fields = '__all__'
-
-    def to_representation(self, obj):
-        representation = super().to_representation(obj)
-
-        item_representation = representation.pop('item')
-        for key in item_representation:
-            representation[f'item {key}'] = item_representation[key]
-        return representation
+    #
+    # def to_representation(self, obj):
+    #     representation = super().to_representation(obj)
+    #
+    #     item_representation = representation.pop('item')
+    #     for key in item_representation:
+    #         representation[f'item {key}'] = item_representation[key]
+    #     return representation
 
 
 class PriceDetailSerializer(serializers.ModelSerializer):
@@ -194,3 +180,20 @@ class TradeDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trade
         fields = '__all__'
+
+
+class PopularItemSerializer(ItemSerializer):
+    count_offers = serializers.IntegerField()
+
+
+class PopularOfferSerializer(OfferListSerializer):
+    hits = serializers.IntegerField()
+
+
+class PopularCurrencySerializer(CurrencySerializer):
+    counts_currency = serializers.IntegerField()
+
+
+class PopularObjectSerializer(serializers.Serializer):
+    popular_offer = PopularOfferSerializer()
+    popular_currency = PopularCurrencySerializer()
