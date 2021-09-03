@@ -1,5 +1,6 @@
 import json
 import django_filters
+import stripe
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum, F
 from django.http import JsonResponse, HttpResponse
@@ -12,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from django.core.exceptions import ObjectDoesNotExist
 # from statistic.models import Statistic
-
+from TradingPlatform import settings
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
@@ -23,6 +24,67 @@ from .services import ProfitableTransactionsServices, get_client_ip, StatisticSe
 from django.core import serializers
 
 User = get_user_model()
+
+
+class PaymentView(ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = (AllowAny,)
+
+    @action(methods=['get'], detail=False, url_path='payment')
+    def payment(self, request):
+        test_payment_intent = stripe.PaymentIntent.create(
+            amount=1000,
+            currency='eur',
+            payment_method_types=['card'],
+            receipt_email='pl.1.el.vas@gmail.com',
+
+            # customer=stripe.Customer.retrieve("cus_K9x9PqOTWgP0X6")
+        )
+        intent_list = stripe.PaymentIntent.list()
+        # #
+        # for i in intent_list:
+        #     stripe.PaymentIntent.cancel(
+        #         i['id']
+        #     )
+        return Response(data=intent_list, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='customers')
+    def customers(self, request):
+        customer = stripe.Customer.create(
+            email='pl.1.el.vas@gmail.com',
+            stripe_account=settings.STRIPE_ACCOUNT_ID,
+            name='liza'
+        )
+        customer_list = stripe.Customer.list()
+        # cust_update = stripe.Customer.modify(
+        #     'cus_K9vfIysK78Uw3L',
+        #     name='liza'
+        # )
+        # stripe.Customer.delete('cus_K9wHGDkjOW7eVA')
+        # stripe.Customer.delete('cus_K9wHudrM0HVYpB')
+        # # stripe.Customer.delete('cus_K9wIDUfLXyHpJ5')
+        # stripe.Customer.delete('cus_K9wI5CepLnpCLh')
+        # stripe.Customer.delete('cus_K9wJKvot5u6mgp')
+        return Response(data=(customer_list), status=status.HTTP_200_OK)
+
+
+    @action(methods=['get'], detail=False, url_path='accounts')
+    def accounts(self, request):
+        # customer = stripe.Account.create(
+        #     email='pl.1.el.vas@gmail.com',
+        #     stripe_account=settings.STRIPE_ACCOUNT_ID,
+        # )
+        account_list = stripe.Account.list()
+        # account = stripe.Account.create(
+        #     type="custom",
+        #     country="US",
+        #     email='pl.1.el.vas@gmail.com',
+        #     # capabilities={
+        #     #     "card_payments": {"requested": True},
+        #     #     "transfers": {"requested": True},
+        #     # },
+        # )
+
+        return Response(data=account_list, status=status.HTTP_200_OK)
 
 
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
