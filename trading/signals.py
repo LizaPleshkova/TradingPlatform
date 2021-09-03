@@ -14,10 +14,10 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
         instance.profile = UserProfile.objects.create(user=instance)
 
 
-@receiver(post_save, sender=Offer)
-def when_create_offer(sender, instance, created, **kwargs):
-    ''' search offers for trade'''
-    if created:
-        ProfitableTransactionsServices.requirements_for_transaction()
-        print('from signals when_create_offer')
-
+# @receiver(post_save, sender=Offer)
+# def when_create_offer(sender, instance, created, **kwargs):
+#     ''' search offers for trade'''
+#     if created:
+#         ProfitableTransactionsServices.requirements_for_transaction()
+#         print('from signals when_create_offer')
+#

@@ -83,7 +83,8 @@ class Offer(models.Model):
     # counts_views = models.ManyToManyField(Ip, blank=True, related_name='offer_views')
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.counts_views}'
+        # return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.counts_views}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} '
 
 
 class Trade(models.Model):
@@ -94,10 +95,14 @@ class Trade(models.Model):
     seller_offer = models.ForeignKey(Offer, blank=True, null=True, on_delete=models.SET_NULL,
                                      related_name='seller_trade')
     buyer_offer = models.ForeignKey(Offer, blank=True, null=True, on_delete=models.SET_NULL, related_name='buyer_trade')
+    price = models.DecimalField("Requested price", max_digits=7, decimal_places=2, null=True)
+    quantity = models.IntegerField()
     description = models.TextField(max_length=500, blank=True, null=True, )
 
+    trade_date = models.DateTimeField(blank=True, null=True,)
+
     def __str__(self):
-        return f'{self.id} - {self.description}'
+        return f'{self.id} - {self.description} - {self.trade_date}'
 
 
 class Inventory(models.Model):

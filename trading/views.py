@@ -17,7 +17,6 @@ from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
     PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
-    PopularOfferSerializer
 )
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip
 from .services import ProfitableTransactionsServices, get_client_ip, StatisticService
@@ -28,34 +27,33 @@ User = get_user_model()
 
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    #
-    # def my_view(request):
-    #     book = Offer.objects.get(
-    #         id__in=Offer.objects.values('id').filter(is_active=True)
-    #     )
-    #
-    #     # Put object in statistic table
-    #     Statistic.objects.add(book)
-    #     print(Statistic.objects.add(book))
-    #     # Get statistic for object
-    #     statistic_for_object = Statistic.objects.get_statistic_for_object(book)
-    #     print(statistic_for_object)
-    #
-    #     # Get statistic for model
-    #     statistic_for_model = Statistic.objects.get_statistic_for_model(Offer, limit=50)
-    #     print(statistic_for_model)
-    #     return HttpResponse(statistic_for_object, content_type="text/json-comment-filtered")
 
     def list(self, request, *args, **kwargs):
+        ''' general statistic '''
+        ser_data = StatisticService.users_statistic(self.request.user.id)
+        return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
+
+    @action(methods=['get'], detail=False, url_path='popular-objects')
+    def popular_objects(self, request):
+        # +
         ser_data = StatisticService.get_popular_objects()
         return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
 
-    @action(methods=['get'], detail=False, url_path='popular-offer')
-    def popular_offer(self, request):
-        popular_offer = Offer.objects.annotate(counts_views=Count('counts_views')).order_by('-counts_views').first()
-        ser = PopularOfferSerializer(popular_offer)
+    @action(methods=['get'], detail=False, url_path='user-trade-today')
+    def user_trade_today(self, request):
+        tr = StatisticService.user_trade_today_count(self.request.user.id)
+        return Response(tr, content_type="application/json")
 
-        return Response(ser.data, content_type="application/json")
+    @action(methods=['get'], detail=False, url_path='user-items-today')
+    def user_items_today(self, request):
+        tr = StatisticService.items_today(self.request.user.id)
+        return Response(tr, content_type="application/json")
+
+    @action(methods=['get'], detail=False, url_path='sum-trade-today')
+    def sum_trade_today(self, request):
+        ''' не работает - из--за высчитывания сумымы'''
+        tr = StatisticService.sum_user_trade_today(self.request.user.id)
+        return Response(tr, content_type="application/json")
 
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
