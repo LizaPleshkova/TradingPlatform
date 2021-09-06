@@ -16,6 +16,7 @@ class UserProfile(models.Model):
         related_name='user_profile'
     )
     score = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0)
+    stripe_client_id = models.CharField(max_length=255)
 
     def __str__(self):
         return f'{self.id} - {self.user.username} - {self.score}'

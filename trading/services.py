@@ -4,7 +4,6 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, F, Q, Value, Sum
-from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404
 
 from .enums import OfferCnoice
