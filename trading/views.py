@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from django.core.exceptions import ObjectDoesNotExist
 # from statistic.models import Statistic
-from TradingPlatform import settings
+from django.conf import global_settings, settings
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
@@ -29,51 +29,103 @@ User = get_user_model()
 class PaymentView(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
 
+    @action(methods=['get'], detail=False, url_path='ok')
+    def ok(self, request):
+        return Response(data={'succes': 'o k'})
+
+    @action(methods=['get'], detail=False, url_path='fail')
+    def fail(self, request):
+        return Response(data={'succes': 'o k'})
+
+    @action(methods=['get'], detail=False, url_path='create-session')
+    def checkout_sessions(self, request):
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'T-shirt',
+                    },
+                    'unit_amount': 2000,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='http://127.0.0.1:8000/trading/payment/ok/',
+            cancel_url='http://127.0.0.1:8000/trading/payment/fail/',
+        )
+        # print(session.url)
+        return Response(session.url, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='confirm_card_payment')
+    def confirm_card_payment(self, request):
+        conf = stripe.PaymentIntent.confirm(
+            "pi_3JWNJdEYdpQ6mE0A0RZfW9Jh",
+            payment_method="pm_1JWNJdEYdpQ6mE0Al5mbZWGu"
+        )
+        return Response(conf)
+
     @action(methods=['get'], detail=False, url_path='payment')
     def payment(self, request):
+        payment_method = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": "4242424242424242",
+                "exp_month": 9,
+                "exp_year": 2022,
+                "cvc": "314",
+            },
+        )
         test_payment_intent = stripe.PaymentIntent.create(
             amount=1000,
             currency='eur',
             payment_method_types=['card'],
             receipt_email='pl.1.el.vas@gmail.com',
-
+            # payment_method_options= stripe.PaymentMethod.retrieve("pm_1JWN7DEYdpQ6mE0AbQNGhj72")
             # customer=stripe.Customer.retrieve("cus_K9x9PqOTWgP0X6")
         )
-        intent_list = stripe.PaymentIntent.list()
+        # intent_list = stripe.PaymentIntent.list()
         # #
         # for i in intent_list:
         #     stripe.PaymentIntent.cancel(
         #         i['id']
         #     )
-        return Response(data=intent_list, status=status.HTTP_200_OK)
+        print(test_payment_intent, payment_method, sep='\n\n')
+        return Response(test_payment_intent, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='secret')
+    def secret(self, request):
+        test_payment_intent = stripe.PaymentIntent.retrieve(
+            # 'pi_3JWMryEYdpQ6mE0A1WuzjKtu_secret_nZ6uqAz3OEdIaOqgXjD8HuQMr'
+            "pi_3JWMryEYdpQ6mE0A1WuzjKtu",
+        )
+
+        print(test_payment_intent.client_secret)
+        return Response(data=test_payment_intent.client_secret, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='customers')
     def customers(self, request):
-        customer = stripe.Customer.create(
-            email='pl.1.el.vas@gmail.com',
-            stripe_account=settings.STRIPE_ACCOUNT_ID,
-            name='liza'
-        )
+        # customer = stripe.Customer.create(
+        #     email='pl.1.el.vas@gmail.com',
+        #     stripe_account=settings.STRIPE_ACCOUNT_ID,
+        #     name='liza'
+        # )
         customer_list = stripe.Customer.list()
         # cust_update = stripe.Customer.modify(
         #     'cus_K9vfIysK78Uw3L',
         #     name='liza'
         # )
-        # stripe.Customer.delete('cus_K9wHGDkjOW7eVA')
-        # stripe.Customer.delete('cus_K9wHudrM0HVYpB')
-        # # stripe.Customer.delete('cus_K9wIDUfLXyHpJ5')
-        # stripe.Customer.delete('cus_K9wI5CepLnpCLh')
-        # stripe.Customer.delete('cus_K9wJKvot5u6mgp')
+
         return Response(data=(customer_list), status=status.HTTP_200_OK)
 
-
-    @action(methods=['get'], detail=False, url_path='accounts')
-    def accounts(self, request):
+    @action(methods=['get'], detail=False, url_path='payment-methods')
+    def payment_methods(self, request):
         # customer = stripe.Account.create(
         #     email='pl.1.el.vas@gmail.com',
         #     stripe_account=settings.STRIPE_ACCOUNT_ID,
         # )
-        account_list = stripe.Account.list()
+        # account_list = stripe.Account.list()
         # account = stripe.Account.create(
         #     type="custom",
         #     country="US",
@@ -83,8 +135,16 @@ class PaymentView(ListModelMixin, viewsets.GenericViewSet):
         #     #     "transfers": {"requested": True},
         #     # },
         # )
-
-        return Response(data=account_list, status=status.HTTP_200_OK)
+        payment_methods = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": "4242424242424242",
+                "exp_month": 9,
+                "exp_year": 2022,
+                "cvc": "314",
+            },
+        )
+        return Response(data=payment_methods, status=status.HTTP_200_OK)
 
 
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
