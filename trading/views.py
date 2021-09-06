@@ -1,5 +1,6 @@
 import json
 import django_filters
+import stripe
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum, F
 from django.http import JsonResponse, HttpResponse
@@ -11,11 +12,12 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from django.core.exceptions import ObjectDoesNotExist
+# from statistic.models import Statistic
+from django.conf import global_settings, settings
 from .serializers import (
     OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
     PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
-    PopularOfferSerializer
 )
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip
 from .services import ProfitableTransactionsServices, get_client_ip, StatisticService
@@ -24,19 +26,156 @@ from django.core import serializers
 User = get_user_model()
 
 
+class PaymentView(ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = (AllowAny,)
+
+    @action(methods=['get'], detail=False, url_path='ok')
+    def ok(self, request):
+        return Response(data={'succes': 'o k'})
+
+    @action(methods=['get'], detail=False, url_path='fail')
+    def fail(self, request):
+        return Response(data={'succes': 'o k'})
+
+    @action(methods=['get'], detail=False, url_path='create-session')
+    def checkout_sessions(self, request):
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'T-shirt',
+                    },
+                    'unit_amount': 2000,
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
+            success_url='http://127.0.0.1:8000/trading/payment/ok/',
+            cancel_url='http://127.0.0.1:8000/trading/payment/fail/',
+        )
+        # print(session.url)
+        return Response(session.url, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='confirm_card_payment')
+    def confirm_card_payment(self, request):
+        conf = stripe.PaymentIntent.confirm(
+            "pi_3JWNJdEYdpQ6mE0A0RZfW9Jh",
+            payment_method="pm_1JWNJdEYdpQ6mE0Al5mbZWGu"
+        )
+        return Response(conf)
+
+    @action(methods=['get'], detail=False, url_path='payment')
+    def payment(self, request):
+        payment_method = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": "4242424242424242",
+                "exp_month": 9,
+                "exp_year": 2022,
+                "cvc": "314",
+            },
+        )
+        test_payment_intent = stripe.PaymentIntent.create(
+            amount=1000,
+            currency='eur',
+            payment_method_types=['card'],
+            receipt_email='pl.1.el.vas@gmail.com',
+            # payment_method_options= stripe.PaymentMethod.retrieve("pm_1JWN7DEYdpQ6mE0AbQNGhj72")
+            # customer=stripe.Customer.retrieve("cus_K9x9PqOTWgP0X6")
+        )
+        # intent_list = stripe.PaymentIntent.list()
+        # #
+        # for i in intent_list:
+        #     stripe.PaymentIntent.cancel(
+        #         i['id']
+        #     )
+        print(test_payment_intent, payment_method, sep='\n\n')
+        return Response(test_payment_intent, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='secret')
+    def secret(self, request):
+        test_payment_intent = stripe.PaymentIntent.retrieve(
+            # 'pi_3JWMryEYdpQ6mE0A1WuzjKtu_secret_nZ6uqAz3OEdIaOqgXjD8HuQMr'
+            "pi_3JWMryEYdpQ6mE0A1WuzjKtu",
+        )
+
+        print(test_payment_intent.client_secret)
+        return Response(data=test_payment_intent.client_secret, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='customers')
+    def customers(self, request):
+        # customer = stripe.Customer.create(
+        #     email='pl.1.el.vas@gmail.com',
+        #     stripe_account=settings.STRIPE_ACCOUNT_ID,
+        #     name='liza'
+        # )
+        customer_list = stripe.Customer.list()
+        # cust_update = stripe.Customer.modify(
+        #     'cus_K9vfIysK78Uw3L',
+        #     name='liza'
+        # )
+
+        return Response(data=(customer_list), status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='payment-methods')
+    def payment_methods(self, request):
+        # customer = stripe.Account.create(
+        #     email='pl.1.el.vas@gmail.com',
+        #     stripe_account=settings.STRIPE_ACCOUNT_ID,
+        # )
+        # account_list = stripe.Account.list()
+        # account = stripe.Account.create(
+        #     type="custom",
+        #     country="US",
+        #     email='pl.1.el.vas@gmail.com',
+        #     # capabilities={
+        #     #     "card_payments": {"requested": True},
+        #     #     "transfers": {"requested": True},
+        #     # },
+        # )
+        payment_methods = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": "4242424242424242",
+                "exp_month": 9,
+                "exp_year": 2022,
+                "cvc": "314",
+            },
+        )
+        return Response(data=payment_methods, status=status.HTTP_200_OK)
+
+
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
 
     def list(self, request, *args, **kwargs):
+        ''' general statistic '''
+        ser_data = StatisticService.users_statistic(self.request.user.id)
+        return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
+
+    @action(methods=['get'], detail=False, url_path='popular-objects')
+    def popular_objects(self, request):
+        # +
         ser_data = StatisticService.get_popular_objects()
         return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
 
-    @action(methods=['get'], detail=False, url_path='popular-offer')
-    def popular_offer(self, request):
-        popular_offer = Offer.objects.annotate(counts_views=Count('counts_views')).order_by('-counts_views').first()
-        ser = PopularOfferSerializer(popular_offer)
+    @action(methods=['get'], detail=False, url_path='user-trade-today')
+    def user_trade_today(self, request):
+        tr = StatisticService.user_trade_today_count(self.request.user.id)
+        return Response(tr, content_type="application/json")
 
-        return Response(ser.data, content_type="application/json")
+    @action(methods=['get'], detail=False, url_path='user-items-today')
+    def user_items_today(self, request):
+        tr = StatisticService.items_today(self.request.user.id)
+        return Response(tr, content_type="application/json")
+
+    @action(methods=['get'], detail=False, url_path='sum-trade-today')
+    def sum_trade_today(self, request):
+        ''' не работает - из--за высчитывания сумымы'''
+        tr = StatisticService.sum_user_trade_today(self.request.user.id)
+        return Response(tr, content_type="application/json")
 
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):

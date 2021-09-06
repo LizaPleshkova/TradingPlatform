@@ -1,78 +1,129 @@
+from datetime import datetime
 from decimal import Decimal
-
-from django.core import serializers
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
+from django.db.models import Count, F, Q, Value, Sum
 from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404
 
 from .enums import OfferCnoice
 from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip, UserProfile
 from .serializers import (
-    OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
-    OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
-    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
-    PopularOfferSerializer, PopularObjectSerializer, PopularCurrencySerializer
+     PopularObjectSerializer, PopularCurrencySerializer
 )
 
 
 class StatisticService:
-    # @staticmethod
-    # def get_popular_objects():
-    #     popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits')[:1]
-    #     popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
-    #     popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by('-counts_currency')[:1]
-    #
-    #     # ser = PopularObjectSerializer(popular_offer, popular_item, popular_currency)
-    #     # ser_offer = PopularItemSerializer(data=popular_item)
-    #     # ser_offer.is_valid(raise_exception=True)
-    #
-    #     popular_objects = {
-    #         'popular_offer': popular_offer,
-    #         # 'popular_item': popular_item,
-    #         # 'popular_currency': popular_currency,
-    #     }
-    #     # ser = PopularObjectSerializer(data=popular_objects)
-    #     ser = PopularOfferSerializer(data=popular_offer)
-    #     ser.is_valid(raise_exception=True)
-    #     ser.validated_data
-    #     return ser.data
+
+    @staticmethod
+    def users_statistic(user_id):
+        user_trade_today_count = StatisticService.user_trade_today_count(user_id)
+        items_today = StatisticService.items_today(user_id)
+        sum_trades =StatisticService.sum_user_trade_today(user_id)
+        statistic_user = {
+            'user_trade_today_count': user_trade_today_count,
+            'items_today': items_today,
+            'user_sum': sum_trades
+        }
+
+        return statistic_user
+
+    @staticmethod
+    def sum_user_trade_today(user_id):
+        ''' trade for user's buying '''
+        trades = Trade.objects.filter(
+            trade_date__date=datetime.now().date(),
+            buyer=1
+        ).annotate(sum=Sum(F('price') * F('quantity')))
+
+        us_buy = User.objects.filter(
+            id=user_id
+        ).annotate(sum=Sum(F('buyer_trade__price') * F('buyer_trade__quantity'))).values('sum')
+        us_sell = User.objects.filter(
+            id=user_id
+        ).annotate(sum=Sum(F('seller_trade__price') * F('seller_trade__quantity'))).values('sum')
+
+        return {
+            'sum_trades_buy': us_buy.first(),
+            'sum_trades_sell': us_sell.first(),
+        }
+
     @staticmethod
     def get_popular_objects():
         # popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits').first()
         popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers').first()
         popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by(
             '-counts_currency').first()
-        #
+
+        popular_objects = {
+            'popular_item': popular_item,
+            'popular_currency': popular_currency,
+        }
+
+        # work
+        # pidict = model_to_dict(popular_item)
+        # pidict['count_offers']= popular_item.count_offers
         # popular_objects = {
-        #     'popular_offer': model_to_dict(popular_offer),
-        #     'popular_item': model_to_dict(popular_item),
+        #     # 'popular_offer': model_to_dict(popular_offer),
+        #     'popular_item':pidict,
         #     'popular_currency': model_to_dict(popular_currency),
         # }
-        # popular_offer = Offer.objects.get(id=36)
-        pidict = model_to_dict(popular_item)
-        pidict['count_offers']= popular_item.count_offers
-        popular_objects = {
-            # 'popular_offer': model_to_dict(popular_offer),
-            'popular_item':pidict,
-            'popular_currency': model_to_dict(popular_currency),
-        }
-        # obj = {
-        #     'popular_offer': {
-        #         "id":...,
-        #         "type_transaction":...,
-        #     },
-        #     'popular_currency': {
-        #         "id": ...,
-        #         "code": ...,
-        #     }
-        # }
+
         ser_cur = PopularCurrencySerializer(popular_currency)
-        # ser = PopularObjectSerializer(data=popular_objects)
-        # ser.is_valid(raise_exception=True)
-        # ser.validated_data
-        return popular_objects
-        # return popular_objects
+        ser = PopularObjectSerializer(popular_objects)
+
+        return ser.data
+
+    @staticmethod
+    def user_trade_today_count(user_id):
+        '''
+        +
+        сколько сегодня было совершено сделок for buying/selling
+        '''
+        users_trades_buy = User.objects.filter(
+            id=1,
+            user_offer__type_transaction=OfferCnoice.BUY.value
+        ).annotate(counts=Count('user_offer__buyer_trade')).values('counts')
+        users_trades_sell = User.objects.filter(
+            id=user_id,
+            user_offer__type_transaction=OfferCnoice.SELL.value
+        ).annotate(counts=Count('user_offer__seller_trade')).values('counts')
+
+        return {
+            "counts_trade_buy": users_trades_buy.first(),
+            "counts_trade_sell": users_trades_sell.first(),
+        }
+
+    @staticmethod
+    def items_today(user_id):
+        '''
+        +
+        какие акции купили/продали сегодня'''
+        # все trades в которых пользователь продавал
+        trade_today = Trade.objects.filter(
+            seller=1,
+            trade_date__date=datetime.now().date(),
+        ).only('id')
+
+        items_sell = Item.objects.filter(
+            item_offer__seller_trade__id__in=trade_today
+        ).values()
+
+        # все trades в которых пользователь покупал
+        trade_today = Trade.objects.filter(
+            buyer=user_id,
+            trade_date__date=datetime.now().date(),
+        ).only('id')
+
+        items_buy = Item.objects.filter(
+            item_offer__buyer_trade__id__in=trade_today
+        ).values()
+
+        return {
+            'items_buy': items_buy,
+            'items_sell': items_sell,
+        }
 
 
 def _updating_offer_quantity(offer1, offer2):
@@ -96,7 +147,7 @@ class ProfitableTransactionsServices:
             'user__user_profile')  # все офферы для покупки
         seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.value, is_active=True).select_related(
             'user__user_profile')  # все офферы для продажи
-
+        print(buyer_offers, seller_offers, sep='\n')
         for buyer_offer in buyer_offers:
             for seller_offer in seller_offers:
                 ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
@@ -112,19 +163,21 @@ class ProfitableTransactionsServices:
     def checking_offers_quantity(buyer_offer: Offer, seller_offer: Offer):
         if buyer_offer.quantity <= seller_offer.quantity:
             # купили столько акций, сколько было необходимо ( указано в заявке)
-
-            TradeService.updating_users_score(seller_offer, buyer_offer)
-            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
-            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
-            TradeService.updating_price_item(buyer_offer)
-
             trade = Trade.objects.create(
                 seller=seller_offer.user,
                 buyer=buyer_offer.user,
                 seller_offer=seller_offer,
                 buyer_offer=buyer_offer,
-                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks ",
+                trade_date=datetime.now(),
+                price=buyer_offer.price,
+                quantity=buyer_offer.quantity,
             )
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
 
             if buyer_offer.quantity - seller_offer.quantity == 0:
                 _updating_offer_is_active(seller_offer)
@@ -133,19 +186,21 @@ class ProfitableTransactionsServices:
 
         elif buyer_offer.quantity > seller_offer.quantity:
             # покупка акций по нескольким офферс
-
-            TradeService.updating_users_score(seller_offer, buyer_offer)
-            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
-            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
-            TradeService.updating_price_item(buyer_offer)
-
             trade = Trade.objects.create(
                 seller=seller_offer.user,
                 buyer=buyer_offer.user,
                 seller_offer=seller_offer,
                 buyer_offer=buyer_offer,
-                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks ",
+                trade_date=datetime.now(),
+                price=buyer_offer.price,
+                quantity=seller_offer.quantity,
             )
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
 
             _updating_offer_quantity(buyer_offer, seller_offer)
             _updating_offer_is_active(seller_offer)

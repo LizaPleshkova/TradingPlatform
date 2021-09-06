@@ -77,7 +77,6 @@ class OfferListSerializer(serializers.Serializer):
 
 
 class OfferRetrieveSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Offer
         # fields = '__all__'
@@ -183,17 +182,13 @@ class TradeDetailSerializer(serializers.ModelSerializer):
 
 
 class PopularItemSerializer(ItemSerializer):
-    count_offers = serializers.IntegerField()
-
-
-class PopularOfferSerializer(OfferListSerializer):
-    hits = serializers.IntegerField()
+    count_offers = serializers.IntegerField(read_only=True)
 
 
 class PopularCurrencySerializer(CurrencySerializer):
-    counts_currency = serializers.IntegerField()
+    counts_currency = serializers.IntegerField(read_only=True)
 
 
 class PopularObjectSerializer(serializers.Serializer):
-    popular_offer = PopularOfferSerializer()
+    popular_item = PopularItemSerializer()
     popular_currency = PopularCurrencySerializer()

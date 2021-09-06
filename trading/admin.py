@@ -1,6 +1,8 @@
 from django.contrib import admin
-from django.contrib.admin import forms
-
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django import forms
+from trading.enums import OfferCnoice
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, Ip
 
 
@@ -22,15 +24,41 @@ class PriceAdmin(admin.ModelAdmin):
     search_fields = ['item']
 
 
+class OfferForm(forms.ModelForm):
+    class Meta:
+        model = Offer
+        fields = '__all__'
+
+    def clean(self):
+        """ checking quantity seller's stocks """
+        try:
+            if self.data.get('type_transaction') == OfferCnoice.SELL.value:
+                inventory_seller = Inventory.objects.get(user=self.data.get('user'), item=self.data.get('item'))
+                if inventory_seller.quantity <= int(self.data.get('quantity')):
+                    raise forms.ValidationError('You want to sell more stocks than you have', code='invalid')
+            if self.data.get('type_transaction') == OfferCnoice.BUY.value:
+                user = User.objects.get(id=int(self.data.get('user')))
+                buyer_profile = user.user_profile
+                if int(buyer_profile.score) <= (float(self.data.get('quantity')) * float(self.data.get('price'))):
+                    raise forms.ValidationError(
+                        "There aren't enough cash in the account to buy such a quantity of dtocks", code='invalid'
+                    )
+        except Inventory.DoesNotExist:
+            raise ObjectDoesNotExist('No Inventory seller matches the given query')
+        except UserProfile.DoesNotExist:
+            raise ObjectDoesNotExist('No UserProfile seller matches the given query')
+
+
 class OfferAdmin(admin.ModelAdmin):
     # list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active', 'counts_views')
-    list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active', )
+    list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active',)
     list_filter = ['type_transaction', 'item', 'user', 'is_active']
+    form = OfferForm
 
 
 class TradeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'seller', 'buyer', 'seller_offer', 'buyer_offer')
-    list_filter = ['seller', 'buyer']
+    list_display = ('id', 'seller', 'buyer', 'seller_offer', 'buyer_offer', 'trade_date')
+    list_filter = ['seller', 'buyer', 'trade_date']
     search_fields = ['seller', 'buyer']
 
 
