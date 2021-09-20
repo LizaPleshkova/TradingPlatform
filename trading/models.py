@@ -1,11 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
 from trading.enums import OfferCnoice
-
-
-class Ip(models.Model):
-    ip = models.GenericIPAddressField()
 
 
 class UserProfile(models.Model):
@@ -16,6 +11,7 @@ class UserProfile(models.Model):
         related_name='user_profile'
     )
     score = models.DecimalField(max_digits=7, decimal_places=2, blank=True, null=True, default=0)
+    stripe_client_id = models.CharField(max_length=255, default="")
 
     def __str__(self):
         return f'{self.id} - {self.user.username} - {self.score}'
@@ -83,7 +79,8 @@ class Offer(models.Model):
     # counts_views = models.ManyToManyField(Ip, blank=True, related_name='offer_views')
 
     def __str__(self):
-        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.counts_views}'
+        # return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} - {self.counts_views}'
+        return f'{self.id} - {self.type_transaction} - {self.item} - {self.user.username} '
 
 
 class Trade(models.Model):
@@ -92,12 +89,16 @@ class Trade(models.Model):
     buyer = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name='buyer_trade')
 
     seller_offer = models.ForeignKey(Offer, blank=True, null=True, on_delete=models.SET_NULL,
-                                     related_name='seller_trade')
-    buyer_offer = models.ForeignKey(Offer, blank=True, null=True, on_delete=models.SET_NULL, related_name='buyer_trade')
+                                     related_name='sell_trade')
+    buyer_offer = models.ForeignKey(Offer, blank=True, null=True, on_delete=models.SET_NULL, related_name='buy_trade')
+    price = models.DecimalField("Requested price", max_digits=7, decimal_places=2, null=True)
+    quantity = models.IntegerField()
     description = models.TextField(max_length=500, blank=True, null=True, )
 
+    trade_date = models.DateTimeField(blank=True, null=True, )
+
     def __str__(self):
-        return f'{self.id} - {self.description}'
+        return f'{self.id} - {self.description} - {self.trade_date} -{self.price} - {self.quantity}'
 
 
 class Inventory(models.Model):

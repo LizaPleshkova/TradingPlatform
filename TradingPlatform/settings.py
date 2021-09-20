@@ -2,6 +2,8 @@
 Django settings for TradingPlatform project.
 """
 from pathlib import Path
+
+import stripe
 from dotenv import load_dotenv
 import os
 
@@ -9,6 +11,9 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+stripe.api_key = os.getenv("STRIPE_API_KEY")
+STRIPE_ACCOUNT_ID = os.getenv("STRIPE_ACCOUNT_ID")
 
 DEBUG = True
 
@@ -31,8 +36,7 @@ INSTALLED_APPS = [
     'work_shift',
 
     'celery',
-    # 'django_statistic',
-'django_filters',
+    'django_filters',
 ]
 
 SHELL_PLUS_PRINT_SQL = True
@@ -42,27 +46,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ]
 }
-# LOGGING = {
-#     'version': 1,
-#     'filters': {
-#         'require_debug_true': {
-#             '()': 'django.utils.log.RequireDebugTrue',
-#         }
-#     },
-#     'handlers': {
-#         'console': {
-#             'level': 'DEBUG',
-#             'filters': ['require_debug_true'],
-#             'class': 'logging.StreamHandler',
-#         }
-#     },
-#     'loggers': {
-#         'django.db.backends': {
-#             'level': 'DEBUG',
-#             'handlers': ['console'],
-#         }
-#     }
-# }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

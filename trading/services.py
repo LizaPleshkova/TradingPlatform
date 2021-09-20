@@ -1,61 +1,244 @@
+from datetime import datetime
 from decimal import Decimal
-
-from django.core import serializers
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count
-from django.forms import model_to_dict
+from django.db.models import Count, F, Q, Sum
 from django.shortcuts import get_object_or_404
 
 from .enums import OfferCnoice
-from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip, UserProfile
+from .models import Currency, Item, Price, Offer, Trade, Inventory, UserProfile
 from .serializers import (
-    OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
-    OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
-    PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
-    PopularOfferSerializer, PopularObjectSerializer, PopularCurrencySerializer
+    PopularObjectSerializer, AttachPaymentMethodToCustomerSerializer,
+    CreatePaymentMethodCardSerializer, ConfirmPaymentSerializer, CreatePaymentIntentSerializer, ItemSerializer
 )
+import stripe
+
+
+class PaymentService:
+    @staticmethod
+    def create_payment_method_card(request):
+        serializer = CreatePaymentMethodCardSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        payment_method = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": serializer.validated_data['number'],
+                "exp_month": serializer.validated_data['exp_month'],
+                "exp_year": serializer.validated_data['exp_year'],
+                "cvc": serializer.validated_data['cvc'],
+            },
+        )
+
+        # for test
+        # payment_method = stripe.PaymentMethod.retrieve(
+        #     "pm_1JaLO3EYdpQ6mE0ASQzn2koT"  # for user3
+        # )
+
+        payment_method_attach = PaymentService.attach_payment_method_to_customer(request.user, payment_method['id'])
+        return payment_method_attach
+
+    @staticmethod
+    def attach_payment_method_to_customer(user, payment_method_id):
+        serializer = AttachPaymentMethodToCustomerSerializer(
+            data={"payment_method_id": payment_method_id},
+            context={'user': user}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        payment_method = stripe.PaymentMethod.attach(
+            serializer.validated_data['payment_method_id'],
+            customer=serializer.validated_data['customer']
+        )
+        # for test
+        # payment_method = stripe.PaymentMethod.list(
+        #     customer=serializer.validated_data['customer'],
+        #     type="card"
+        # )
+        return payment_method
+
+    @staticmethod
+    def confirm_payment_intent(request):
+        serializer = ConfirmPaymentSerializer(
+            data=request.data,
+            context={'user': request.user}
+        )
+        serializer.is_valid(raise_exception=True)
+        conf = stripe.PaymentIntent.confirm(
+            serializer.validated_data['payment_intent_id'],
+            payment_method=serializer.validated_data['payment_method_id'],
+        )
+        return conf
+
+    @staticmethod
+    def create_payment_intent(request):
+        ser = CreatePaymentIntentSerializer(data=request.data, context={"user": request.user})
+        ser.is_valid(raise_exception=True)
+
+        test_payment_intent = stripe.PaymentIntent.create(
+            amount=ser.validated_data['amount'],
+            currency=ser.validated_data['currency'],
+            payment_method_types=[ser.validated_data['payment_method_types']],
+            customer=ser.validated_data['customer'],
+            receipt_email=ser.validated_data['receipt_email']
+        )
+
+        # test_payment_intent = stripe.PaymentIntent.retrieve(
+        #     "pi_3JaKRLEYdpQ6mE0A14ArQIp7"
+        # )
+        print(test_payment_intent['id'])
+
+        return test_payment_intent
 
 
 class StatisticService:
+
+    @staticmethod
+    def users_statistic(user_id):
+        user_trade_today_count = StatisticService.user_trade_today_count(user_id)
+        items_today = StatisticService.items_today(user_id)
+        sum_trades = StatisticService.sum_user_trade_today(user_id)
+        statistic_user = {
+            'user_trade_today_count': user_trade_today_count,
+            'items_today': items_today,
+            'user_sum': sum_trades
+        }
+
+        return statistic_user
+
+    @staticmethod
+    def sum_user_trade_today(user_id):
+        '''
+        trade for user's buying
+        '''
+
+        user_trades_sum_buy = User.objects.filter(
+            id=user_id
+        ).aggregate(
+            buy_trade_sum=Sum(F('buyer_trade__price') * F('buyer_trade__quantity'), dictinct=True),
+        )
+
+        user_trades_sum_sell = User.objects.filter(
+            id=user_id
+        ).aggregate(
+            sell_trade_sum=Sum(F('seller_trade__price') * F('seller_trade__quantity'), dictinct=True)
+        )
+
+        # user_trades_sum = User.objects.filter(
+        #     id=1
+        # ).aggregate(
+        #     buy_trade_sum=Sum(F('buyer_trade__price') * F('buyer_trade__quantity'), dictinct=True),
+        #     sell_trade_sum=Sum(F('seller_trade__price') * F('seller_trade__quantity'), dictinct=True)
+        # )
+
+        return {
+            'buy_trade_sum': user_trades_sum_buy,
+            'sell_trade_sum': user_trades_sum_sell
+        }
+
     @staticmethod
     def get_popular_objects():
-        # popular_offer = Offer.objects.annotate(hits=Count('counts_views')).order_by('-hits').first()
         popular_item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers').first()
         popular_currency = Currency.objects.annotate(counts_currency=Count('currency_item')).order_by(
-            '-counts_currency').first()
+            '-counts_currency'
+        ).first()
 
         popular_objects = {
             'popular_item': popular_item,
             'popular_currency': popular_currency,
         }
-
-        # work
-        # pidict = model_to_dict(popular_item)
-        # pidict['count_offers']= popular_item.count_offers
-        # popular_objects = {
-        #     # 'popular_offer': model_to_dict(popular_offer),
-        #     'popular_item':pidict,
-        #     'popular_currency': model_to_dict(popular_currency),
-        # }
-
-        ser_cur = PopularCurrencySerializer(popular_currency)
-        ser = PopularObjectSerializer(popular_objects)
-
-        return ser.data
+        serializer_objects = PopularObjectSerializer(popular_objects)
+        return serializer_objects.data
 
     @staticmethod
-    def get_best_items():
-        ''' get best-selling/best-buying items'''
+    def user_trade_today_count(user_id):
+        '''
+        сколько сегодня было совершено сделок for buying/selling
+        '''
+        users_trades = User.objects.filter(
+            id=user_id,
+        ).annotate(
+            buy_trades_count=Count(
+                'user_offer__buy_trade',
+                filter=Q(user_offer__type_transaction=OfferCnoice.BUY.value)
+            ),
+            sell_trades_count=Count(
+                'user_offer__sell_trade',
+                filter=Q(user_offer__type_transaction=OfferCnoice.SELL.value)
+            )
+        ).values('buy_trades_count', 'sell_trades_count').first()
 
-        return
+        return {
+            "buy_trades_count": users_trades['buy_trades_count'],
+            "sell_trades_count": users_trades['sell_trades_count'],
+        }
 
     @staticmethod
-    def smth():
-        ''' на сколько сегодня было совершено сделок'''
+    def items_today_second(user):
+
+        user_trades_buy = set()
+        user_trades_sell = set()
+
+        user_trades_today = Trade.objects.filter(
+            Q(seller=user) | Q(buyer=user),
+            trade_date__date=datetime.now().date()
+        ).select_related('seller_offer__item', 'buyer_offer__item', 'seller', 'buyer')
+
+        for trade in user_trades_today:
+            if trade.buyer == user:
+                user_trades_buy.add(trade.buyer_offer.item)
+            elif trade.seller == user:
+                user_trades_sell.add(trade.buyer_offer.item)
+
+        return {
+            'items_buy': ItemSerializer(user_trades_buy, many=True).data,
+            'items_sell': ItemSerializer(user_trades_sell, many=True).data,
+        }
 
     @staticmethod
-    def smth():
-        ''' какие акции купили продали сегодня'''
+    def items_today_third(user):
+
+        user_trades_buy = set()
+        user_trades_sell = set()
+
+        user_trades_today = Trade.objects.filter(
+            Q(seller=user) | Q(buyer=user),
+            trade_date__date=datetime.now().date()
+        ).select_related('seller_offer__item', 'buyer_offer__item', 'seller', 'buyer')
+
+        for trade in user_trades_today:
+            if trade.buyer == user:
+                user_trades_buy.add(trade.buyer_offer.item)
+            elif trade.seller == user:
+                user_trades_sell.add(trade.buyer_offer.item)
+
+        return {
+            'items_buy': ItemSerializer(user_trades_buy, many=True).data,
+            'items_sell': ItemSerializer(user_trades_sell, many=True).data,
+        }
+
+    @staticmethod
+    def items_today(user_id):
+        '''
+        какие акции купили/продали сегодня
+        '''
+
+        # акции, которые купил user
+        user_items_buy = Item.objects.filter(
+            item_offer__buy_trade__trade_date__date=datetime.now().date(),
+            item_offer__buy_trade__buyer=1
+        ).values().distinct()
+
+        # акции, которые продал user
+        user_items_sell = Item.objects.filter(
+            item_offer__sell_trade__trade_date__date=datetime.now().date(),
+            item_offer__sell_trade__seller=user_id
+        ).values().distinct()
+
+        return {
+            'items_buy': user_items_buy,
+            'items_sell': user_items_sell,
+        }
 
 
 def _updating_offer_quantity(offer1, offer2):
@@ -79,7 +262,7 @@ class ProfitableTransactionsServices:
             'user__user_profile')  # все офферы для покупки
         seller_offers = Offer.objects.filter(type_transaction=OfferCnoice.SELL.value, is_active=True).select_related(
             'user__user_profile')  # все офферы для продажи
-
+        print(buyer_offers, seller_offers, sep='\n')
         for buyer_offer in buyer_offers:
             for seller_offer in seller_offers:
                 ProfitableTransactionsServices.checking_offers(buyer_offer, seller_offer)
@@ -95,19 +278,21 @@ class ProfitableTransactionsServices:
     def checking_offers_quantity(buyer_offer: Offer, seller_offer: Offer):
         if buyer_offer.quantity <= seller_offer.quantity:
             # купили столько акций, сколько было необходимо ( указано в заявке)
-
-            TradeService.updating_users_score(seller_offer, buyer_offer)
-            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
-            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
-            TradeService.updating_price_item(buyer_offer)
-
             trade = Trade.objects.create(
                 seller=seller_offer.user,
                 buyer=buyer_offer.user,
                 seller_offer=seller_offer,
                 buyer_offer=buyer_offer,
-                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks ",
+                trade_date=datetime.now(),
+                price=buyer_offer.price,
+                quantity=buyer_offer.quantity,
             )
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
 
             if buyer_offer.quantity - seller_offer.quantity == 0:
                 _updating_offer_is_active(seller_offer)
@@ -116,19 +301,21 @@ class ProfitableTransactionsServices:
 
         elif buyer_offer.quantity > seller_offer.quantity:
             # покупка акций по нескольким офферс
-
-            TradeService.updating_users_score(seller_offer, buyer_offer)
-            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
-            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
-            TradeService.updating_price_item(buyer_offer)
-
             trade = Trade.objects.create(
                 seller=seller_offer.user,
                 buyer=buyer_offer.user,
                 seller_offer=seller_offer,
                 buyer_offer=buyer_offer,
-                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks "
+                description=f"{buyer_offer.user} buy {seller_offer.user}'s stocks ",
+                trade_date=datetime.now(),
+                price=buyer_offer.price,
+                quantity=seller_offer.quantity,
             )
+
+            TradeService.updating_users_score(seller_offer, buyer_offer)
+            TradeService.updating_inventory_buyer(seller_offer, buyer_offer)
+            TradeService.updating_inventory_seller(seller_offer, buyer_offer)
+            TradeService.updating_price_item(buyer_offer)
 
             _updating_offer_quantity(buyer_offer, seller_offer)
             _updating_offer_is_active(seller_offer)
@@ -190,14 +377,3 @@ class TradeService:
             price_item.save(update_fields=["price"])
         except Price.DoesNotExist:
             raise ObjectDoesNotExist('No Price matches the given query')
-
-
-# Метод для получения айпи
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')  # В REMOTE_ADDR значение айпи пользователя
-    return ip
-#
