@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from django import forms
 from trading.enums import OfferCnoice
 from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, Ip
@@ -44,20 +43,23 @@ class OfferForm(forms.ModelForm):
                         "There aren't enough cash in the account to buy such a quantity of dtocks", code='invalid'
                     )
         except Inventory.DoesNotExist:
-            raise ObjectDoesNotExist('No Inventory seller matches the given query')
+            raise forms.ValidationError(
+                "No Inventory seller matches the given query", code='invalid'
+            )
         except UserProfile.DoesNotExist:
-            raise ObjectDoesNotExist('No UserProfile seller matches the given query')
+            raise forms.ValidationError(
+                'No UserProfile seller matches the given query', code='invalid'
+            )
 
 
 class OfferAdmin(admin.ModelAdmin):
-    # list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active', 'counts_views')
     list_display = ('id', 'type_transaction', 'item', 'user', 'price', 'quantity', 'is_active',)
     list_filter = ['type_transaction', 'item', 'user', 'is_active']
     form = OfferForm
 
 
 class TradeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'seller', 'buyer', 'seller_offer', 'buyer_offer', 'trade_date')
+    list_display = ('id', 'seller', 'buyer', 'seller_offer', 'buyer_offer', 'trade_date', 'price', 'quantity')
     list_filter = ['seller', 'buyer', 'trade_date']
     search_fields = ['seller', 'buyer']
 
