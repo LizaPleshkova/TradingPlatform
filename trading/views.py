@@ -3,21 +3,20 @@ import django_filters
 import stripe
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum, F
-from django.http import JsonResponse, HttpResponse
 from requests import Response
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework import viewsets, status, serializers
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, CreateModelMixin
 from django.core.exceptions import ObjectDoesNotExist
 from .serializers import (
-    OfferListSerializer, ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
+    ItemSerializer, WatchListSerializer, CurrencySerializer, PriceSerializer,
     OfferDetailSerializer, ItemDetailSerializer, TradeDetailSerializer, InventoryDetailSerializer, InventorySerializer,
     PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
 )
-from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, Ip
-from .services import ProfitableTransactionsServices, get_client_ip, StatisticService
+from .models import Currency, Item, Price, WatchList, Offer, Inventory
+from .services import ProfitableTransactionsServices, StatisticService, PaymentService
 
 User = get_user_model()
 
@@ -25,86 +24,32 @@ User = get_user_model()
 class PaymentView(ListModelMixin, viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
 
-    @action(methods=['get'], detail=False, url_path='ok')
-    def ok(self, request):
-        return Response(data={'succes': 'o k'})
-
-    @action(methods=['get'], detail=False, url_path='fail')
-    def fail(self, request):
-        return Response(data={'succes': 'o k'})
-
-    @action(methods=['get'], detail=False, url_path='create-session')
-    def checkout_sessions(self, request):
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'usd',
-                    'product_data': {
-                        'name': 'T-shirt',
-                    },
-                    'unit_amount': 2000,
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            success_url='http://127.0.0.1:8000/trading/payment/ok/',
-            cancel_url='http://127.0.0.1:8000/trading/payment/fail/',
-        )
-        # print(session.url)
-        return Response(session.url, status=status.HTTP_200_OK)
-
-    @action(methods=['get'], detail=False, url_path='payment_method')
+    @action(methods=['get'], detail=False, url_path='payment-method')
     def payment_method(self, request):
-        payment_meth = stripe.PaymentMethod.create(
-            type="card",
-            card={
-                "number": "4000 0025 0000 3155",
-                "exp_month": 9,
-                "exp_year": 2022,
-                "cvc": "314",
-            },
-        )
-        return Response(payment_meth)
+        payment_method = PaymentService.create_payment_method_card(request)
+        return Response(payment_method, status=status.HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_path='confirm_payment')
+    @action(methods=['get'], detail=False, url_path='confirm-payment')
     def confirm_payment(self, request):
-        # {
-        #     "payment_intent_id": "pi_3JWhxKEYdpQ6mE0A0cFaextT",
-        #     "payment_meth_id": "pm_1JWhviEYdpQ6mE0AaLqigODz"
-        # "pi_3JWi2IEYdpQ6mE0A1eHBWqfQ"
-        # "pm_1JWi0YEYdpQ6mE0AEl1WMxmh"# (2) auth requir
-        # }
-        payment_intent = self.request.data.get("payment_intent_id")
-        payment_meth = self.request.data.get("payment_meth_id")
-        conf = stripe.PaymentIntent.confirm(
-            payment_intent,
-            payment_method=payment_meth
-        )
-        return Response(conf)
+        conf = PaymentService.confirm_payment_intent(request)
+        return Response(conf, status=status.HTTP_200_OK)
 
-    @action(methods=['get'], detail=False, url_path='payment')
-    def payment(self, request):
-        user_id = self.request.user.id
-        user = User.objects.get(id=user_id)
-
-        test_payment_intent = stripe.PaymentIntent.create(
-            amount=1000,
-            currency='eur',
-            payment_method_types=['card'],
-            customer=user.user_profile.stripe_client_id,
-            receipt_email=user.email,
-        )
-        # intent_list = stripe.PaymentIntent.list()
-
-        return Response(test_payment_intent, status=status.HTTP_200_OK)
+    @action(methods=['post'], detail=False, url_path='payment')
+    def create_payment_intent(self, request):
+        s = PaymentService.create_payment_intent(request)
+        return Response(s, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='secret')
     def secret(self, request):
         test_payment_intent = stripe.PaymentIntent.retrieve(
-            self.request.data.get("payment_intent_id")
+            request.data.get("payment_intent_id")
         )
         return Response(data=test_payment_intent.client_secret, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='customer-list')
+    def customer_list(self, request):
+        test_payment_intent = stripe.PaymentMethod.list()
+        return Response(data=test_payment_intent, status=status.HTTP_200_OK)
 
 
 class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
@@ -122,18 +67,25 @@ class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
 
     @action(methods=['get'], detail=False, url_path='user-trade-today')
     def user_trade_today(self, request):
-        tr = StatisticService.user_trade_today_count(self.request.user.id)
-        return Response(tr, content_type="application/json")
+        tr = StatisticService.user_trade_today_count(request.user.id)
+        return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='user-items-today')
+    def user_items_todays(self, request):
+        # tr = StatisticService.items_today_second(request.user)
+        tr = StatisticService.items_today(request.user.id)
+        return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path='user-items-today-sec')
     def user_items_today(self, request):
-        tr = StatisticService.items_today(self.request.user.id)
-        return Response(tr, content_type="application/json")
+        tr = StatisticService.items_today_second(request.user)
+        # tr = StatisticService.items_today(request.user.id)
+        return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='sum-trade-today')
     def sum_trade_today(self, request):
-        tr = StatisticService.sum_user_trade_today(self.request.user.id)
-        return Response(tr, content_type="application/json")
+        tr = StatisticService.sum_user_trade_today(request.user.id)
+        return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
 
 class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -151,21 +103,6 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, OfferRetrieveSerializer)
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        ip = get_client_ip(request)
-        ip = '0.0.0.1'
-        serializer = self.get_serializer(instance)
-        if Ip.objects.filter(ip=ip).exists():
-            instance.counts_views.add(Ip.objects.get(ip=ip))
-        else:
-            Ip.objects.create(ip=ip)
-            instance.counts_views.add(Ip.objects.get(ip=ip))
-
-        # instance.counts_views += 1
-        # instance.save(update_fields=["counts_views"])
-        return Response(serializer.data)
-
     def create(self, request, *args, **kwargs):
         try:
             request.data['user'] = request.user.id
@@ -182,21 +119,14 @@ class OfferListUserView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, vi
         offers = Offer.objects.filter(user=request.user).aggregate(sum_offers=Sum(F('price') * F('quantity')))
         offers['sum_offers'] = float(offers['sum_offers'])
         json_offer = json.dumps(offers)
-        return Response(json_offer, content_type="text/json-comment-filtered")
+        return Response(json_offer, content_type="text/json-comment-filtered", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='price_offers_users')
     def price_offers_users(self, request):
         offers = Offer.objects.values('user').annotate(sum_offers=Sum(F('price') * F('quantity')))
         for off in offers:
             off['sum_offers'] = float(off['sum_offers'])
-        return Response(json.dumps(list(offers)), content_type="application/json")
-
-    @action(methods=['get'], detail=False, url_path='popular-offer')
-    def popular_offer(self, request):
-        offers = Offer.objects.values('id').annotate(co=Count('counts_views')).order_by('-co').first()
-        offers = Offer.objects.annotate(co=Count('counts_views')).order_by('-co').first()
-
-        return Response(json.dumps(offers), content_type="application/json")
+        return Response(json.dumps(list(offers)), content_type="application/json", status=status.HTTP_200_OK)
 
 
 class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -218,7 +148,7 @@ class ItemView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.Ge
         item = Item.objects.annotate(count_offers=Count('item_offer')).order_by('-count_offers')[:1]
         m = PopularItemSerializer(item, many=True)
         # nb = json.dumps(m.data)
-        return HttpResponse(m.data, content_type='application/json')
+        return Response(m.data, content_type='application/json', status=status.HTTP_200_OK)
 
 
 class WatchListView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
@@ -249,9 +179,6 @@ class InventoryView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewse
 
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, InventorySerializer)
-
-    # def perform_create(self, serializer):
-    #     return serializer.save(user=self.request.user)
 
 
 class CurrencyView(ListModelMixin, RetrieveModelMixin, CreateModelMixin, viewsets.GenericViewSet):
