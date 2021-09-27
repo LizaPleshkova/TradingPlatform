@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django import forms
 from trading.enums import OfferCnoice
-from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile, Ip
+from trading.models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, UserProfile
 
 
 class CurrencyAdmin(admin.ModelAdmin):
@@ -82,12 +82,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ['user']
 
 
-class IpAdmin(admin.ModelAdmin):
-    list_display = ('id', 'ip',)
-    # list_filter = ['ip']
-    search_fields = ['ip']
-
-
 admin.site.register(Currency, CurrencyAdmin)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Price, PriceAdmin)
@@ -96,4 +90,3 @@ admin.site.register(Trade, TradeAdmin)
 admin.site.register(Inventory, InventoryAdmin)
 admin.site.register(WatchList, WatchListAdmin)
 admin.site.register(UserProfile, UserProfileAdmin)
-admin.site.register(Ip, IpAdmin)

@@ -2,8 +2,8 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 import pytest
 from trading.models import Trade, Inventory, UserProfile
-from trading.services import (
-    TradeService, ProfitableTransactionsServices, _updating_offer_quantity, _updating_offer_is_active
+from trading.services.trade import (
+    TradeService, ProfitableTransactionsService, _updating_offer_quantity, _updating_offer_is_active
 )
 
 User = get_user_model()
@@ -118,6 +118,6 @@ def test_checking_offers_quantity(offer_inventory_setup):
 
     assert len(Trade.objects.all()) == 0
 
-    trade = ProfitableTransactionsServices.checking_offers_quantity(seller_offer, buyer_offer)
+    trade = ProfitableTransactionsService.checking_offers_quantity(seller_offer, buyer_offer)
 
     assert len(Trade.objects.all()) == 1

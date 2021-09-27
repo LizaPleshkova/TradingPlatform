@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, F, Q, Sum
@@ -9,9 +10,126 @@ from .enums import OfferCnoice
 from .models import Currency, Item, Price, Offer, Trade, Inventory, UserProfile
 from .serializers import (
     PopularObjectSerializer, AttachPaymentMethodToCustomerSerializer,
-    CreatePaymentMethodCardSerializer, ConfirmPaymentSerializer, CreatePaymentIntentSerializer, ItemSerializer
+    CreatePaymentMethodCardSerializer, ConfirmPaymentSerializer, CreatePaymentIntentSerializer, ItemSerializer,
+    CurrencySerializer, CurrencyFromExcel
 )
 import stripe
+from pathlib import Path
+import pandas as pd
+
+
+def _sheets_to_dict(excel_file):
+    data_records = {}
+    for sheet in excel_file.sheet_names:
+        d = excel_file.parse(sheet).to_dict('records')
+        data_records[sheet] = d
+    return data_records
+
+
+def _validate_excel_data_columns(data_dict_sheets):
+    for sheet in data_dict_sheets:
+        if 'id' in data_dict_sheets[sheet]:
+            data_dict_sheets[sheet] = data_dict_sheets[sheet].drop(columns='id')
+        if 'code' in data_dict_sheets[sheet] or 'name' in data_dict_sheets[sheet]:
+            data_dict_sheets[sheet] = data_dict_sheets[sheet].to_dict('records')
+            _save_excel_data(data_dict_sheets[sheet])
+    return data_dict_sheets
+
+
+def _save_excel_data(excel_data_dict):
+    ser = CurrencySerializer(data=excel_data_dict, many=True)
+    ser.is_valid(raise_exception=True)
+    cur_list = [Currency(code=i['code'], name=i['name']) for i in ser.validated_data]
+    Currency.objects.bulk_create(cur_list)
+    print('cur_list',cur_list)
+    return cur_list
+
+
+class ImportExcelService:
+    '''
+    разбей все по методам. Порефактори. И сделай возможность имплорта как из эксель так и с помощью csv
+    '''
+    @staticmethod
+    def import_excel_sheets(file_name):
+        '''
+        +
+        import data from all sheets of the excel-file
+        '''
+        file_path = Path(file_name)
+        if file_path.suffix == '.xlsx' or file_path.suffix == '.xls':
+            xl = pd.ExcelFile(file_name)
+            return _sheets_to_dict(xl)
+        else:
+            raise ValueError('needs the format file .xlsx or .xls')
+
+    @staticmethod
+    def import_currency_to_excel(file_name):
+
+        file_path = Path(file_name)
+        if file_path.suffix == '.xlsx' or file_path.suffix == '.xls':
+            # get dict with all sheets from excel file with values (DataFrame)
+            xl = pd.ExcelFile(file_name)
+            sheets = xl.sheet_names
+            data_dict_sheets = {}
+            for sheet in sheets:
+                d = xl.parse(sheet)
+                data_dict_sheets[sheet] = d
+
+            data_dict_sheets = _validate_excel_data_columns(data_dict_sheets)
+            return data_dict_sheets
+            #
+            # for sheet in data_dict_sheets:
+            #     if 'id' in data_dict_sheets[sheet]:
+            #         data_dict_sheets[sheet] = data_dict_sheets[sheet].drop(columns='id')
+            #     if 'code' in data_dict_sheets[sheet] or 'name' in data_dict_sheets[sheet]:
+            #         # dataframe to dict
+            #         data_dict_sheets[sheet] = data_dict_sheets[sheet].to_dict('records')
+            #         ser = CurrencySerializer(data=data_dict_sheets[sheet], many=True)
+            #         ser.is_valid(raise_exception=True)
+            #         cur_list = [Currency(code=i['code'], name=i['name']) for i in ser.validated_data]
+            #         Currency.objects.bulk_create(cur_list)
+            # return data_dict_sheets
+
+        else:
+            raise ValueError('needs the format file .xlsx or .xls')
+
+
+class ExportExcelService:
+
+    @staticmethod
+    def export_to_excel(file_name):
+        try:
+            # file_name = 'test.xlsx'
+            file_path = Path(file_name)
+            if file_path.suffix == '.xlsx':
+                # количество листов!
+                xslx = pd.read_excel(file_name, engine='openpyxl')
+                sheet_dataframe = xslx.head()
+                # проверка: есть ли столбец id
+                if 'id' in sheet_dataframe:
+                    sheet_dataframe = sheet_dataframe.drop(columns='id')
+                excel_dict = sheet_dataframe.to_dict('records')
+                for record in excel_dict:
+                    if 'code' in record or 'name' in record:
+                        ser = CurrencySerializer(data=excel_dict, many=True)
+                        ser.is_valid(raise_exception=True)
+                        cur_list = [Currency(code=i['code'], name=i['name']) for i in ser.validated_data]
+                        Currency.objects.bulk_create(cur_list, ignore_conflicts=True)
+                        return cur_list
+                return excel_dict
+            elif file_path.suffix == '.xls':
+                df = pd.read_excel(file_name)
+                print(df)
+            else:
+                # handle other file types
+                pass
+        except Exception:
+            raise Exception
+
+
+#
+# if __name__ == "__main__":
+#     df = ExportExcelService.export_to_excel()
 
 
 class PaymentService:

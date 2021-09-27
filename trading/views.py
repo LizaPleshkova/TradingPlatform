@@ -3,6 +3,7 @@ import django_filters
 import stripe
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum, F
+from django.utils.datastructures import MultiValueDictKeyError
 from requests import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -16,9 +17,68 @@ from .serializers import (
     PriceDetailSerializer, CurrencyDetailSerializer, PopularItemSerializer, OfferRetrieveSerializer,
 )
 from .models import Currency, Item, Price, WatchList, Offer, Inventory
-from .services import ProfitableTransactionsServices, StatisticService, PaymentService
+from trading.services import (import_export_excel, import_export_csv, payment, statistics, trade, )
 
 User = get_user_model()
+
+
+class ImportExportCsvView(viewsets.GenericViewSet):
+    permission_classes = (AllowAny,)
+
+    @action(methods=['post'], detail=False, url_path='import')
+    def import_from_csv(self, request):
+        try:
+            excel_file = request.FILES['file'].name
+            print(excel_file)
+            data = import_export_csv.ImportCsv.import_from_csv(excel_file)
+            return Response(data, status=status.HTTP_200_OK)
+        except ValueError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='export')
+    def export_to_csv(self, request):
+        try:
+            excel_file = request.FILES['file'].name
+            data = import_export_csv.ExportCsv.export_to_csv(excel_file)
+            return Response(data, status=status.HTTP_200_OK)
+        except ValueError as ex:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ImportExportExcelView(viewsets.GenericViewSet):
+    permission_classes = (AllowAny,)
+
+    @action(methods=['post'], detail=False, url_path='import-currencies')
+    def import_method(self, request):
+        try:
+            excel_file = request.FILES['file'].name
+            data = import_export_excel.ImportExcelService.import_currency_to_excel(excel_file)
+            return Response(data, status=status.HTTP_200_OK)
+        except MultiValueDictKeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as ex:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='import')
+    def import_sheets(self, request):
+        try:
+            data = import_export_excel.ImportExcelService.import_excel_sheets(
+                request.FILES['file'].name
+            )
+            return Response(data, status=status.HTTP_200_OK)
+        except MultiValueDictKeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as ex:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=False, url_path='export')
+    def export_to_excel(self, request):
+        try:
+            excel_file = request.FILES['file'].name
+            data = import_export_excel.ExportExcelService.export_to_excel(excel_file)
+            return Response(data, status=status.HTTP_200_OK)
+        except ValueError as ex:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class PaymentView(ListModelMixin, viewsets.GenericViewSet):
@@ -26,17 +86,17 @@ class PaymentView(ListModelMixin, viewsets.GenericViewSet):
 
     @action(methods=['get'], detail=False, url_path='payment-method')
     def payment_method(self, request):
-        payment_method = PaymentService.create_payment_method_card(request)
+        payment_method = payment.PaymentService.create_payment_method_card(request)
         return Response(payment_method, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='confirm-payment')
     def confirm_payment(self, request):
-        conf = PaymentService.confirm_payment_intent(request)
+        conf = payment.PaymentService.confirm_payment_intent(request)
         return Response(conf, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=False, url_path='payment')
     def create_payment_intent(self, request):
-        s = PaymentService.create_payment_intent(request)
+        s = payment.PaymentService.create_payment_intent(request)
         return Response(s, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='secret')
@@ -57,34 +117,34 @@ class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
 
     def list(self, request, *args, **kwargs):
         ''' general statistic '''
-        ser_data = StatisticService.users_statistic(self.request.user.id)
+        ser_data = statistics.StatisticService.users_statistic(self.request.user.id)
         return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
 
     @action(methods=['get'], detail=False, url_path='popular-objects')
     def popular_objects(self, request):
-        ser_data = StatisticService.get_popular_objects()
+        ser_data = statistics.StatisticService.get_popular_objects()
         return Response(ser_data, status=status.HTTP_200_OK, content_type="application/json")
 
     @action(methods=['get'], detail=False, url_path='user-trade-today')
     def user_trade_today(self, request):
-        tr = StatisticService.user_trade_today_count(request.user.id)
+        tr = statistics.StatisticService.user_trade_today_count(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='user-items-today')
     def user_items_todays(self, request):
         # tr = StatisticService.items_today_second(request.user)
-        tr = StatisticService.items_today(request.user.id)
+        tr = statistics.StatisticService.items_today(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='user-items-today-sec')
     def user_items_today(self, request):
-        tr = StatisticService.items_today_second(request.user)
+        tr = statistics.StatisticService.items_today_second(request.user)
         # tr = StatisticService.items_today(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='sum-trade-today')
     def sum_trade_today(self, request):
-        tr = StatisticService.sum_user_trade_today(request.user.id)
+        tr = statistics.StatisticService.sum_user_trade_today(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
 
@@ -217,7 +277,7 @@ class ProfitableTransactions(ListModelMixin, RetrieveModelMixin, viewsets.Generi
 
     def list(self, request, *args, **kwargs):
         try:
-            ProfitableTransactionsServices.requirements_for_transaction()
+            trade.ProfitableTransactionsServices.requirements_for_transaction()
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist as e:
             return Response(getattr(e, 'message', repr(e)), status=status.HTTP_400_BAD_REQUEST)

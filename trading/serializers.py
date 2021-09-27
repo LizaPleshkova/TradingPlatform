@@ -8,6 +8,10 @@ from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, O
 
 User = get_user_model()
 
+#
+# class ExportDataToExcelSerializer(serializers.Serializer):
+#     sheets = serializers.ListSerializer()
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -121,6 +125,17 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
         fields = ('code', 'name', 'currency')
+
+
+class CurrencyFromExcel(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        # exclude = ('name',)
+        fields = '__all__'
+
+    def to_internal_value(self, data):
+        print(data)
+        return data
 
 
 class CurrencySerializer(serializers.ModelSerializer):
