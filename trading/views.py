@@ -132,14 +132,12 @@ class StatisticViews(ListModelMixin, viewsets.GenericViewSet):
 
     @action(methods=['get'], detail=False, url_path='user-items-today')
     def user_items_todays(self, request):
-        # tr = StatisticService.items_today_second(request.user)
         tr = statistics.StatisticService.items_today(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='user-items-today-sec')
     def user_items_today(self, request):
         tr = statistics.StatisticService.items_today_second(request.user)
-        # tr = StatisticService.items_today(request.user.id)
         return Response(tr, content_type="application/json", status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False, url_path='sum-trade-today')

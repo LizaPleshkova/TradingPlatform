@@ -8,10 +8,6 @@ from .models import Currency, Item, Price, WatchList, Offer, Trade, Inventory, O
 
 User = get_user_model()
 
-#
-# class ExportDataToExcelSerializer(serializers.Serializer):
-#     sheets = serializers.ListSerializer()
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
